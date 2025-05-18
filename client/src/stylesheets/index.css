@@ -1,0 +1,244 @@
+ /*some boilerplate css from another assignment I had, will restructure soon*/
+
+/* body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+
+body{
+  background-color: white;
+  margin: 0;
+  overflow-y: hidden;
+  font-family: "Reddit Sans", serif;
+}
+//header css
+.header{ 
+
+  background-color: white;
+  display: flex;
+  font-size: 1em;
+  padding: .5em .5em;
+  margin: 0;
+  border-bottom: 2px solid black;
+  justify-content: space-between;
+  
+
+  .logo{
+      font-weight: bold;
+      color: orangered;
+      text-decoration-line: none;
+      font-size:xx-large;
+      padding:0;
+      margin:0;
+      border: none;
+      background: none;
+  }
+  //removing underline from a
+  a{
+      text-decoration: none;
+  }
+  .header_buttons{
+      background-color: lightgray;
+      padding: .5em;
+      border: 0 solid lightgrey;
+      color: black;
+      border-radius: 25px;
+      &:hover{
+          background-color: orangered;
+      }
+  }
+  .button_group{
+      padding: .5em;
+  }
+  
+  input[type="text"]{
+      width: 400px;
+      
+      border-color: gainsboro;
+      background-color: gainsboro;
+      border-radius: 5px;
+      margin: auto;
+      padding: .5em;
+  }
+  input:focus{
+      border-color:gainsboro
+  }
+}
+
+#nav_bar{
+  background-color: white;
+  text-align: left;
+  align-items: center;
+ 
+  width: 20%;
+  height: 100vh;
+  padding: 2em 1em;
+  float: left;
+  border-right:2px solid black;
+  a{
+      text-decoration: none;
+      .home{
+          width:100%;
+      }
+  }
+  #home_button{
+      border: 0 solid grey;
+      border-radius: 5px;
+      background-color: lightgrey;
+      text-align: center;
+      display: inline;
+      padding: .5em 13vw .5em .5em;
+      color: black;
+      &:hover{
+          background-color: orangered;
+      }
+  }
+  h1{
+      border-bottom: 2px solid black;
+      padding: .25em;
+  }
+  #create_community_button{
+      color:lightgrey;
+      background-color: grey;
+      border-radius: 5px;
+      padding: .5em;
+
+      &:hover{
+          background-color: orangered;
+      }
+  }
+}
+
+
+.page{
+  height:90vh;
+  overflow-y: scroll;
+  #post_display{
+      padding-bottom: 10em;
+  }
+  #post_count{
+      padding: 0em .5em;
+  }
+  .posts{
+      background-color: white;
+      font-size: 1em;
+      padding: 0em .5em;
+      
+      margin: 0;
+      border-bottom: 2px dotted black;
+
+      
+      h1{
+          font-weight: bold;
+          color: orangered;
+          text-decoration-line: none;
+          font-size:xx-large;
+          padding:0;
+          margin:0;
+      }
+      //removing underline from a
+      a{
+          text-decoration: none;
+      }
+      .header_buttons{
+          background-color: lightgray;
+          padding: .5em;
+          border: 0 solid lightgrey;
+          color: black;
+          border-radius: 25px;
+          &:hover{
+              background-color: orangered;
+          }
+      }
+      .button_group{
+          padding: .5em;
+      }
+      
+      input[type="text"]{
+          width: 400px;
+          height: 35px;
+          border-color: gainsboro;
+          background-color: gainsboro;
+          border-radius: 5px;
+          margin: auto;
+          padding: 1em;
+      }
+      input:focus{
+          border-color:gainsboro
+      }
+  }
+}
+
+#main{
+  margin: 0;
+  height:120%;
+  width:100%;
+  background-color: white;
+  a{
+      text-decoration: none;
+  }
+}
+
+.post {
+  padding-left: 1em;
+  padding-bottom: 1em;
+  border-bottom: 2px solid black;
+  h1{
+      color: orangered;
+  }
+  button {
+      color:lightgrey;
+      background-color: grey;
+      border-radius: 5px;
+      padding: .7em;
+      border-style: none;
+      &:hover{
+          background-color: orangered;
+      }
+  }
+}
+
+#comments {
+  padding-left: 1em;
+  pre {
+      white-space: pre-wrap;
+      font-family: inherit;
+  }
+  button {
+      color:lightgrey;
+      background-color: grey;
+      border-radius: 5px;
+      padding: .7em;
+      border-style: none;
+      &:hover{
+          background-color: orangered;
+      }
+  }
+}
+
+.profile {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.profile-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ffff; 
+  border-radius: 8px;
+  padding: 10px;
+  background-color: #f9f9f9; 
+  margin-top: 10px;
+}
+ */
+
