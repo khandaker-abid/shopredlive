@@ -1,5 +1,4 @@
-// ************** THIS IS YOUR APP'S ENTRY POINT. CHANGE THIS FILE AS NEEDED. **************
-// ************** DEFINE YOUR REACT COMPONENTS in ./components directory **************
+
 import './stylesheets/App.css';
 import { React } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
