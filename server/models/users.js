@@ -9,12 +9,16 @@ var UserSchema = new Schema(
         name: {type: String, required: true, unique: true, trim:true},
         actualName: {type: String, required: true, trim:true},
         password: {type: String, required: true},
-        email: {type: String, required: true, unique: true, trim:true},
-        karma: {type: Number, default: 100}, //optional
-        isAdmin: {type: Boolean, required: true}, //optional
+        email: {type: String, required: true, unique: true, trim:true, lowercase: true},
+        university: {type: String, required: true, trim:true},
+        campus: {type: String, trim:true},
+        phone: {type: String, trim:true},
+        karma: {type: Number, default: 100},
+        isAdmin: {type: Boolean, default: false},
+        isVerifiedStudent: {type: Boolean, default: false},
         products: [{type: Schema.Types.ObjectId, ref: 'Product'}],
         savedProducts: [{type: Schema.Types.ObjectId, ref: 'Product'}],
-        profilePic: {type: buffer}
+        profilePic: {type: Buffer}
     }, {timestamps: true}
 );
 
