@@ -1,0 +1,46 @@
+[
+  {
+    "id": "cat1",
+    "name": "Electronics"
+  },
+  {
+    "id": "cat2",
+    "name": "Books"
+  },
+  {
+    "id": "cat3",
+    "name": "Furniture"
+  },
+  {
+    "id": "cat4",
+    "name": "Clothing"
+  },
+  {
+    "id": "cat5",
+    "name": "Appliances"
+  },
+  {
+    "id": "cat6",
+    "name": "Sports & Outdoors"
+  },
+  {
+    "id": "cat7",
+    "name": "Home & Garden"
+  },
+  {
+    "id": "cat8",
+    "name": "Art & Crafts"
+  },
+  {
+    "id": "cat9",
+    "name": "Musical Instruments"
+  },
+  {
+    "id": "cat10",
+    "name": "Vehicles"
+  },
+  {
+    "id": "cat11",
+    "name": "Other"
+  }
+]

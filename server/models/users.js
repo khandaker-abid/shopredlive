@@ -18,7 +18,7 @@ var UserSchema = new Schema(
         isVerifiedStudent: {type: Boolean, default: false},
         products: [{type: Schema.Types.ObjectId, ref: 'Product'}],
         savedProducts: [{type: Schema.Types.ObjectId, ref: 'Product'}],
-        profilePic: {type: Buffer}
+        profilePic: {type: String}
     }, {timestamps: true}
 );
 

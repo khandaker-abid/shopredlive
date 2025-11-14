@@ -1,62 +1,122 @@
-This is my fullstack rendition of Shop Red Live.
-(NOTE: I put the README here but note that not everything is fully implemented yet! The backend is up, frontend in progress)
+# ShopRedLive - Secondhand Retail Platform
 
-First off, swap into client and install the following using the following commands assuming you don't have them: 
+This is a Next.js web application with MongoDB backend for a secondhand retail platform.
 
-```
-cd client
-npm install react
-npm install axios
-npm install react-router-dom
-```
+## Setup Instructions
 
-Next, with another terminal, assuming you start off at the top directory go to the server and install the following using the following commands:
-```
-cd server
-npm install express
-npm install mongoose
-npm install nodemon
-npm install cors
-```
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-Just in case, if you want, do the following command in both of the terminals (in the client and server directories respectfully), it will help in case and odd dependencies were missed: 
-```
-npm install
-```
+2. **Start MongoDB:**
+   Make sure MongoDB is running on your system (default: mongodb://127.0.0.1:27017)
 
-running this app requires mongoDB and mongosh. the installations are in this link: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/ , https://www.mongodb.com/docs/mongodb-shell/install/
+3. **Import test data:**
+   ```bash
+   node import_test_data.js
+   ```
 
-after you do that, initiate in another terminal the mongoDB initialization command and the following right after: 
+4. **Start the development servers:**
+   - Option 1 - Separately:
+     - Terminal 1 (Frontend): `npm run dev`
+     - Terminal 2 (Backend): `npm run server`
+   - Option 2 - Simultaneously: `npm run dev:all` (requires concurrently)
 
-```
-brew services start mongodb-community@8.0
-mongosh
-show dbs
-use shopredlive
-```
+## Project Structure
 
-Now we start booting up the code. First, we must initialize the database. Using the server terminal, you will be making your own admin account. follow the rules in this next commands brackets to make it and initialize the rest of the data:
+- `/` - Main Next.js application
+- `/server` - Express.js/MongoDB backend server
+- `/test_data` - Generated test data files and scripts
 
-```
-node init.js mongodb://127.0.0.1:27017/shopredlive {username} {firstname} {lastname} {password} {email}
-```
+## Dependencies Consolidation
 
-Now we can start.
-In the server terminal again, type the following:
+All server dependencies (Express, Mongoose, Bcrypt, etc.) have been moved to the main package.json for better organization:
+- Frontend: Next.js, React, Material-UI
+- Backend: Express, Mongoose, Bcrypt, Cors
+- Dev tools: Concurrently (for running both servers simultaneously)
 
-```
-nodemon server.js
-```
+## Test Data Generation
 
-If this doesn't work boot up another terminal in the outer directory and type the following: 
+The project includes a Python script to generate realistic test data:
 
-```
-npm install -g nodemon
-nodemon server/server.js
-```
+- `test_data/generate_test_data.py` - Generates comprehensive test data matching MongoDB schemas
+- Includes 20 users, 50 products, and 11 categories
+- Uses real image URLs from Wikimedia Commons and RandomUser.me
+- All data fields match the MongoDB schema requirements
 
-By this point the server should be connected to port 8000. Finally, type the following in the client terminal and enjoy:
+### Generated Files (in /test_data/):
+- `test_data.json` - Complete dataset
+- `test_users.json` - User data only
+- `test_products.json` - Product data only
+- `test_categories.json` - Category data only
 
-```
-npm start
-```
+## MongoDB Schema Compliance
+
+### Product Schema Fields
+- `name` - Product name (required, max length 100)
+- `description` - Product description (required, max length 2000)
+- `price` - Price (required, minimum 0)
+- `currency` - Currency code (default: USD)
+- `seller` - Reference to User ID (required)
+- `buyer` - Reference to User ID (optional)
+- `images` - Array of image URLs
+- `category` - Reference to Category ID (optional)
+- `condition` - Condition enum (new, like_new, good, fair, poor)
+- `tags` - Array of tags
+- `location` - Nested object with campus and area
+- `status` - Status enum (active, reserved, sold, removed)
+- `negotiable` - Boolean (default: true)
+- `allowsMeetup` - Boolean (default: true)
+- `allowsShipping` - Boolean (default: false)
+- `views` - Number of views (default: 0)
+- `createdAt` - Timestamp (added by schema)
+- `updatedAt` - Timestamp (added by schema)
+
+### User Schema Fields
+- `name` - Username (required, unique, trimmed)
+- `actualName` - Full name (required, trimmed)
+- `password` - Password (required, hashed)
+- `email` - Email address (required, unique, trimmed, lowercase)
+- `university` - University name (required, trimmed)
+- `campus` - Campus name (trimmed)
+- `phone` - Phone number (trimmed)
+- `karma` - Karma score (default: 100)
+- `isAdmin` - Admin status (default: false)
+- `isVerifiedStudent` - Student verification status (default: false)
+- `products` - Array of Product references
+- `savedProducts` - Array of Product references
+- `profilePic` - Profile picture URL
+- `createdAt` - Timestamp (added by schema)
+- `updatedAt` - Timestamp (added by schema)
+
+## Frontend Updates
+
+Updated components to handle the complete schema:
+
+1. **ProductGrid.js** - Now fetches real data from backend API instead of using mock data
+2. **ProductCard.js** - Displays additional fields like condition, negotiability
+3. **ProductDetail.js** - Shows comprehensive product information
+4. **SellForm.js** - Includes all schema fields for product creation
+
+## API Integration
+
+The frontend now connects to the backend server:
+
+- `src/app/api/products/...` - Routes that proxy to backend server
+- Backend endpoints in `/server/server.js` handle database operations
+- Uses environment variable `BACKEND_URL` to specify backend location
+
+## Server-Side Routes
+
+The backend server (in `/server/server.js`) includes the following endpoints:
+- `GET /db` - Returns all products and users with populated references
+- `GET /products` - Returns all products with seller/buyer populated
+- `GET /product/:id` - Returns specific product with populated references
+- `POST /newProduct` - Creates new products with full schema support
+- `PATCH /product/:id` - Updates specific product fields
+- `DELETE /product/:id` - Deletes products
+- `GET /users` - Returns all users with products/savedProducts populated
+- `GET /user/:id` - Returns specific user with populated references
+- `POST /register` - Register new users
+- `POST /users/verify-login` - User login verification

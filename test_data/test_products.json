@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "prod_001",
+    "name": "Digital Camera",
+    "description": "High-quality digital camera in excellent condition. Perfect for students.",
+    "price": 62.99,
+    "currency": "USD",
+    "seller": "user_004",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=49"
+    ],
+    "category": "cat1",
+    "condition": "new",
+    "tags": [
+      "electronics",
+      "used",
+      "recommended"
+    ],
+    "location": {
+      "campus": "Main Campus",
+      "area": "Academic Building"
+    },
+    "status": "reserved",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 28,
+    "createdAt": "2025-11-14T06:14:28.071899",
+    "updatedAt": "2025-11-14T06:14:28.071906"
+  },
+  {
+    "id": "prod_002",
+    "name": "iPad Air",
+    "description": "High-quality ipad air in very good condition. Perfect for students.",
+    "price": 381.36,
+    "currency": "USD",
+    "seller": "user_002",
+    "buyer": "user_010",
+    "images": [
+      "https://picsum.photos/400/300?random=26"
+    ],
+    "category": "cat1",
+    "condition": "poor",
+    "tags": [
+      "electronics",
+      "campus",
+      "quality"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Student Center"
+    },
+    "status": "reserved",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 99,
+    "createdAt": "2025-11-14T06:14:28.071915",
+    "updatedAt": "2025-11-14T06:14:28.071916"
+  },
+  {
+    "id": "prod_003",
+    "name": "Computer Science Handbook",
+    "description": "Used computer science handbook. Pages clean and binding intact. Great for coursework.",
+    "price": 434.23,
+    "currency": "USD",
+    "seller": "user_001",
+    "buyer": "user_010",
+    "images": [
+      "https://picsum.photos/400/300?random=34"
+    ],
+    "category": "cat2",
+    "condition": "like_new",
+    "tags": [
+      "books",
+      "gently_used",
+      "bargain"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Dorm Area"
+    },
+    "status": "active",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 81,
+    "createdAt": "2025-11-14T06:14:28.071925",
+    "updatedAt": "2025-11-14T06:14:28.071926"
+  },
+  {
+    "id": "prod_004",
+    "name": "Literature Anthology",
+    "description": "Used literature anthology. Pages clean and binding intact. Great for reference.",
+    "price": 328.23,
+    "currency": "USD",
+    "seller": "user_010",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=24"
+    ],
+    "category": "cat2",
+    "condition": "poor",
+    "tags": [
+      "books",
+      "dorm",
+      "recommended"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Dorm Area"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 44,
+    "createdAt": "2025-11-14T06:14:28.071932",
+    "updatedAt": "2025-11-14T06:14:28.071933"
+  },
+  {
+    "id": "prod_005",
+    "name": "Dresser",
+    "description": "Sturdy dresser. Good quality and in good condition. Perfect for dorm rooms.",
+    "price": 101.96,
+    "currency": "USD",
+    "seller": "user_020",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=46"
+    ],
+    "category": "cat3",
+    "condition": "like_new",
+    "tags": [
+      "furniture",
+      "student",
+      "quality"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Student Center"
+    },
+    "status": "reserved",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 47,
+    "createdAt": "2025-11-14T06:14:28.071938",
+    "updatedAt": "2025-11-14T06:14:28.071939"
+  },
+  {
+    "id": "prod_006",
+    "name": "Storage Bench",
+    "description": "Sturdy storage bench. Good quality and in fair condition. Perfect for dorm rooms.",
+    "price": 420.98,
+    "currency": "USD",
+    "seller": "user_019",
+    "buyer": "user_020",
+    "images": [
+      "https://picsum.photos/400/300?random=49"
+    ],
+    "category": "cat3",
+    "condition": "new",
+    "tags": [
+      "furniture",
+      "used",
+      "quality"
+    ],
+    "location": {
+      "campus": "Central Campus",
+      "area": "Library"
+    },
+    "status": "reserved",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 1,
+    "createdAt": "2025-11-14T06:14:28.071945",
+    "updatedAt": "2025-11-14T06:14:28.071946"
+  },
+  {
+    "id": "prod_007",
+    "name": "Backpack",
+    "description": "Gently used backpack. Clean and in excellent condition. Brand name piece.",
+    "price": 299.83,
+    "currency": "USD",
+    "seller": "user_017",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=9"
+    ],
+    "category": "cat4",
+    "condition": "like_new",
+    "tags": [
+      "clothing",
+      "used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "Main Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 48,
+    "createdAt": "2025-11-14T06:14:28.071951",
+    "updatedAt": "2025-11-14T06:14:28.071952"
+  },
+  {
+    "id": "prod_008",
+    "name": "Underwear",
+    "description": "Gently used underwear. Clean and in good condition. Brand name piece.",
+    "price": 349.06,
+    "currency": "USD",
+    "seller": "user_005",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=23"
+    ],
+    "category": "cat4",
+    "condition": "new",
+    "tags": [
+      "clothing",
+      "student",
+      "recommended"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Library"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 63,
+    "createdAt": "2025-11-14T06:14:28.071958",
+    "updatedAt": "2025-11-14T06:14:28.071959"
+  },
+  {
+    "id": "prod_009",
+    "name": "Hair Dryer",
+    "description": "Functional hair dryer in very good condition. Perfect for dorm or apartment.",
+    "price": 494.34,
+    "currency": "USD",
+    "seller": "user_003",
+    "buyer": "user_013",
+    "images": [
+      "https://picsum.photos/400/300?random=18"
+    ],
+    "category": "cat5",
+    "condition": "like_new",
+    "tags": [
+      "appliances",
+      "gently_used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Academic Building"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 24,
+    "createdAt": "2025-11-14T06:14:28.071964",
+    "updatedAt": "2025-11-14T06:14:28.071965"
+  },
+  {
+    "id": "prod_010",
+    "name": "Blender",
+    "description": "Functional blender in good condition. Perfect for dorm or apartment.",
+    "price": 175.36,
+    "currency": "USD",
+    "seller": "user_018",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=18"
+    ],
+    "category": "cat5",
+    "condition": "new",
+    "tags": [
+      "appliances",
+      "student",
+      "excellent"
+    ],
+    "location": {
+      "campus": "Central Campus",
+      "area": "Library"
+    },
+    "status": "reserved",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 92,
+    "createdAt": "2025-11-14T06:14:28.071970",
+    "updatedAt": "2025-11-14T06:14:28.071971"
+  },
+  {
+    "id": "prod_011",
+    "name": "Bicycle",
+    "description": "Gently used bicycle in very good condition. Great for outdoor activities.",
+    "price": 217.19,
+    "currency": "USD",
+    "seller": "user_004",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=46"
+    ],
+    "category": "cat6",
+    "condition": "fair",
+    "tags": [
+      "sports_outdoors",
+      "campus",
+      "quality"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 8,
+    "createdAt": "2025-11-14T06:14:28.071977",
+    "updatedAt": "2025-11-14T06:14:28.071978"
+  },
+  {
+    "id": "prod_012",
+    "name": "Bicycle",
+    "description": "Gently used bicycle in good condition. Great for outdoor activities.",
+    "price": 229.81,
+    "currency": "USD",
+    "seller": "user_017",
+    "buyer": "user_017",
+    "images": [
+      "https://picsum.photos/400/300?random=15"
+    ],
+    "category": "cat6",
+    "condition": "fair",
+    "tags": [
+      "sports_outdoors",
+      "dorm",
+      "quality"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Academic Building"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 37,
+    "createdAt": "2025-11-14T06:14:28.071984",
+    "updatedAt": "2025-11-14T06:14:28.071984"
+  },
+  {
+    "id": "prod_013",
+    "name": "Lawn Mower",
+    "description": "Used lawn mower in fair condition. Great for home and garden.",
+    "price": 10.51,
+    "currency": "USD",
+    "seller": "user_006",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=41"
+    ],
+    "category": "cat7",
+    "condition": "good",
+    "tags": [
+      "home_garden",
+      "campus",
+      "quality"
+    ],
+    "location": {
+      "campus": "Central Campus",
+      "area": "Dorm Area"
+    },
+    "status": "active",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 37,
+    "createdAt": "2025-11-14T06:14:28.071990",
+    "updatedAt": "2025-11-14T06:14:28.071991"
+  },
+  {
+    "id": "prod_014",
+    "name": "Fertilizer",
+    "description": "Used fertilizer in fair condition. Great for home and garden.",
+    "price": 117.52,
+    "currency": "USD",
+    "seller": "user_020",
+    "buyer": "user_016",
+    "images": [
+      "https://picsum.photos/400/300?random=44"
+    ],
+    "category": "cat7",
+    "condition": "good",
+    "tags": [
+      "home_garden",
+      "dorm",
+      "excellent"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 9,
+    "createdAt": "2025-11-14T06:14:28.071997",
+    "updatedAt": "2025-11-14T06:14:28.071997"
+  },
+  {
+    "id": "prod_015",
+    "name": "Paint Brushes",
+    "description": "Used paint brushes in very good condition. Perfect for creative projects.",
+    "price": 382.48,
+    "currency": "USD",
+    "seller": "user_020",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=39"
+    ],
+    "category": "cat8",
+    "condition": "poor",
+    "tags": [
+      "art_crafts",
+      "used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Academic Building"
+    },
+    "status": "active",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 45,
+    "createdAt": "2025-11-14T06:14:28.072004",
+    "updatedAt": "2025-11-14T06:14:28.072005"
+  },
+  {
+    "id": "prod_016",
+    "name": "Knitting Needles",
+    "description": "Used knitting needles in very good condition. Perfect for creative projects.",
+    "price": 228.57,
+    "currency": "USD",
+    "seller": "user_019",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=22"
+    ],
+    "category": "cat8",
+    "condition": "like_new",
+    "tags": [
+      "art_crafts",
+      "gently_used",
+      "recommended"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Academic Building"
+    },
+    "status": "reserved",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 21,
+    "createdAt": "2025-11-14T06:14:28.072010",
+    "updatedAt": "2025-11-14T06:14:28.072011"
+  },
+  {
+    "id": "prod_017",
+    "name": "Trumpet",
+    "description": "Musical trumpet in good condition. Well-maintained and ready to play.",
+    "price": 379.37,
+    "currency": "USD",
+    "seller": "user_017",
+    "buyer": "user_017",
+    "images": [
+      "https://picsum.photos/400/300?random=26"
+    ],
+    "category": "cat9",
+    "condition": "fair",
+    "tags": [
+      "musical_instruments",
+      "used",
+      "bargain"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Academic Building"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 94,
+    "createdAt": "2025-11-14T06:14:28.072017",
+    "updatedAt": "2025-11-14T06:14:28.072018"
+  },
+  {
+    "id": "prod_018",
+    "name": "Piano",
+    "description": "Musical piano in good condition. Well-maintained and ready to play.",
+    "price": 178.19,
+    "currency": "USD",
+    "seller": "user_016",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=37"
+    ],
+    "category": "cat9",
+    "condition": "poor",
+    "tags": [
+      "musical_instruments",
+      "dorm",
+      "recommended"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 30,
+    "createdAt": "2025-11-14T06:14:28.072023",
+    "updatedAt": "2025-11-14T06:14:28.072024"
+  },
+  {
+    "id": "prod_019",
+    "name": "Bicycle",
+    "description": "Used bicycle in very good condition. Well-maintained and reliable.",
+    "price": 96.3,
+    "currency": "USD",
+    "seller": "user_007",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=16"
+    ],
+    "category": "cat10",
+    "condition": "fair",
+    "tags": [
+      "vehicles",
+      "student",
+      "quality"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 59,
+    "createdAt": "2025-11-14T06:14:28.072029",
+    "updatedAt": "2025-11-14T06:14:28.072030"
+  },
+  {
+    "id": "prod_020",
+    "name": "Motorcycle",
+    "description": "Used motorcycle in fair condition. Well-maintained and reliable.",
+    "price": 306.06,
+    "currency": "USD",
+    "seller": "user_007",
+    "buyer": "user_013",
+    "images": [
+      "https://picsum.photos/400/300?random=49"
+    ],
+    "category": "cat10",
+    "condition": "new",
+    "tags": [
+      "vehicles",
+      "campus",
+      "bargain"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "active",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 58,
+    "createdAt": "2025-11-14T06:14:28.072040",
+    "updatedAt": "2025-11-14T06:14:28.072041"
+  },
+  {
+    "id": "prod_021",
+    "name": "Umbrella",
+    "description": "umbrella in excellent condition. A useful item for any student.",
+    "price": 229.31,
+    "currency": "USD",
+    "seller": "user_015",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=31"
+    ],
+    "category": "cat11",
+    "condition": "fair",
+    "tags": [
+      "other",
+      "campus",
+      "quality"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Academic Building"
+    },
+    "status": "removed",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 27,
+    "createdAt": "2025-11-14T06:14:28.072046",
+    "updatedAt": "2025-11-14T06:14:28.072047"
+  },
+  {
+    "id": "prod_022",
+    "name": "Backpack",
+    "description": "backpack in excellent condition. A useful item for any student.",
+    "price": 195.26,
+    "currency": "USD",
+    "seller": "user_002",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=16"
+    ],
+    "category": "cat11",
+    "condition": "poor",
+    "tags": [
+      "other",
+      "campus",
+      "recommended"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 88,
+    "createdAt": "2025-11-14T06:14:28.072052",
+    "updatedAt": "2025-11-14T06:14:28.072053"
+  },
+  {
+    "id": "prod_023",
+    "name": "Blender",
+    "description": "Functional blender in good condition. Perfect for dorm or apartment.",
+    "price": 93.0,
+    "currency": "USD",
+    "seller": "user_008",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=42"
+    ],
+    "category": "cat5",
+    "condition": "good",
+    "tags": [
+      "appliances",
+      "gently_used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "reserved",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 85,
+    "createdAt": "2025-11-14T06:14:28.072062",
+    "updatedAt": "2025-11-14T06:14:28.072063"
+  },
+  {
+    "id": "prod_024",
+    "name": "Psychology Introduction",
+    "description": "Used psychology introduction. Pages clean and binding intact. Great for study.",
+    "price": 33.54,
+    "currency": "USD",
+    "seller": "user_011",
+    "buyer": "user_019",
+    "images": [
+      "https://picsum.photos/400/300?random=8"
+    ],
+    "category": "cat2",
+    "condition": "fair",
+    "tags": [
+      "books",
+      "student",
+      "recommended"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 29,
+    "createdAt": "2025-11-14T06:14:28.072070",
+    "updatedAt": "2025-11-14T06:14:28.072071"
+  },
+  {
+    "id": "prod_025",
+    "name": "External Hard Drive",
+    "description": "High-quality external hard drive in very good condition. Perfect for students.",
+    "price": 371.14,
+    "currency": "USD",
+    "seller": "user_019",
+    "buyer": "user_016",
+    "images": [
+      "https://picsum.photos/400/300?random=27"
+    ],
+    "category": "cat1",
+    "condition": "fair",
+    "tags": [
+      "electronics",
+      "used",
+      "bargain"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Dorm Area"
+    },
+    "status": "reserved",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 66,
+    "createdAt": "2025-11-14T06:14:28.072077",
+    "updatedAt": "2025-11-14T06:14:28.072078"
+  },
+  {
+    "id": "prod_026",
+    "name": "Iron",
+    "description": "Functional iron in good condition. Perfect for dorm or apartment.",
+    "price": 312.14,
+    "currency": "USD",
+    "seller": "user_014",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=24"
+    ],
+    "category": "cat5",
+    "condition": "poor",
+    "tags": [
+      "appliances",
+      "dorm",
+      "recommended"
+    ],
+    "location": {
+      "campus": "Central Campus",
+      "area": "Student Center"
+    },
+    "status": "removed",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 28,
+    "createdAt": "2025-11-14T06:14:28.072084",
+    "updatedAt": "2025-11-14T06:14:28.072084"
+  },
+  {
+    "id": "prod_027",
+    "name": "Violin",
+    "description": "Musical violin in very good condition. Well-maintained and ready to play.",
+    "price": 166.36,
+    "currency": "USD",
+    "seller": "user_011",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=5"
+    ],
+    "category": "cat9",
+    "condition": "like_new",
+    "tags": [
+      "musical_instruments",
+      "gently_used",
+      "quality"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Dorm Area"
+    },
+    "status": "active",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 69,
+    "createdAt": "2025-11-14T06:14:28.072090",
+    "updatedAt": "2025-11-14T06:14:28.072091"
+  },
+  {
+    "id": "prod_028",
+    "name": "Dorm Room Desk",
+    "description": "Sturdy dorm room desk. Good quality and in like new condition. Perfect for dorm rooms.",
+    "price": 345.8,
+    "currency": "USD",
+    "seller": "user_014",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=13"
+    ],
+    "category": "cat3",
+    "condition": "poor",
+    "tags": [
+      "furniture",
+      "gently_used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Student Center"
+    },
+    "status": "active",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 23,
+    "createdAt": "2025-11-14T06:14:28.072096",
+    "updatedAt": "2025-11-14T06:14:28.072097"
+  },
+  {
+    "id": "prod_029",
+    "name": "Dress",
+    "description": "Gently used dress. Clean and in fair condition. Brand name piece.",
+    "price": 14.51,
+    "currency": "USD",
+    "seller": "user_015",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=36"
+    ],
+    "category": "cat4",
+    "condition": "new",
+    "tags": [
+      "clothing",
+      "dorm",
+      "recommended"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Library"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 42,
+    "createdAt": "2025-11-14T06:14:28.072106",
+    "updatedAt": "2025-11-14T06:14:28.072107"
+  },
+  {
+    "id": "prod_030",
+    "name": "Programming in Python",
+    "description": "Used programming in python. Pages clean and binding intact. Great for reference.",
+    "price": 258.74,
+    "currency": "USD",
+    "seller": "user_020",
+    "buyer": "user_016",
+    "images": [
+      "https://picsum.photos/400/300?random=4"
+    ],
+    "category": "cat2",
+    "condition": "new",
+    "tags": [
+      "books",
+      "student",
+      "quality"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 95,
+    "createdAt": "2025-11-14T06:14:28.072112",
+    "updatedAt": "2025-11-14T06:14:28.072113"
+  },
+  {
+    "id": "prod_031",
+    "name": "Hiking Boots",
+    "description": "Gently used hiking boots in very good condition. Great for outdoor activities.",
+    "price": 182.94,
+    "currency": "USD",
+    "seller": "user_015",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=30"
+    ],
+    "category": "cat6",
+    "condition": "good",
+    "tags": [
+      "sports_outdoors",
+      "gently_used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Library"
+    },
+    "status": "active",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 55,
+    "createdAt": "2025-11-14T06:14:28.072118",
+    "updatedAt": "2025-11-14T06:14:28.072119"
+  },
+  {
+    "id": "prod_032",
+    "name": "Coffee Table",
+    "description": "Sturdy coffee table. Good quality and in good condition. Perfect for dorm rooms.",
+    "price": 100.35,
+    "currency": "USD",
+    "seller": "user_003",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=31"
+    ],
+    "category": "cat3",
+    "condition": "like_new",
+    "tags": [
+      "furniture",
+      "dorm",
+      "bargain"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 24,
+    "createdAt": "2025-11-14T06:14:28.072125",
+    "updatedAt": "2025-11-14T06:14:28.072125"
+  },
+  {
+    "id": "prod_033",
+    "name": "Clarinet",
+    "description": "Musical clarinet in good condition. Well-maintained and ready to play.",
+    "price": 457.99,
+    "currency": "USD",
+    "seller": "user_004",
+    "buyer": "user_012",
+    "images": [
+      "https://picsum.photos/400/300?random=28"
+    ],
+    "category": "cat9",
+    "condition": "good",
+    "tags": [
+      "musical_instruments",
+      "used",
+      "quality"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Academic Building"
+    },
+    "status": "removed",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 10,
+    "createdAt": "2025-11-14T06:14:28.072131",
+    "updatedAt": "2025-11-14T06:14:28.072132"
+  },
+  {
+    "id": "prod_034",
+    "name": "T-Shirt",
+    "description": "Gently used t-shirt. Clean and in fair condition. Great fit piece.",
+    "price": 82.96,
+    "currency": "USD",
+    "seller": "user_004",
+    "buyer": "user_004",
+    "images": [
+      "https://picsum.photos/400/300?random=36"
+    ],
+    "category": "cat4",
+    "condition": "like_new",
+    "tags": [
+      "clothing",
+      "used",
+      "bargain"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 66,
+    "createdAt": "2025-11-14T06:14:28.072138",
+    "updatedAt": "2025-11-14T06:14:28.072139"
+  },
+  {
+    "id": "prod_035",
+    "name": "Bass Guitar",
+    "description": "Musical bass guitar in fair condition. Well-maintained and ready to play.",
+    "price": 426.31,
+    "currency": "USD",
+    "seller": "user_016",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=45"
+    ],
+    "category": "cat9",
+    "condition": "good",
+    "tags": [
+      "musical_instruments",
+      "gently_used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Student Center"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 94,
+    "createdAt": "2025-11-14T06:14:28.072146",
+    "updatedAt": "2025-11-14T06:14:28.072147"
+  },
+  {
+    "id": "prod_036",
+    "name": "Formal Shirt",
+    "description": "Gently used formal shirt. Clean and in good condition. Stylish piece.",
+    "price": 300.94,
+    "currency": "USD",
+    "seller": "user_009",
+    "buyer": "user_008",
+    "images": [
+      "https://picsum.photos/400/300?random=12"
+    ],
+    "category": "cat4",
+    "condition": "new",
+    "tags": [
+      "clothing",
+      "used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 100,
+    "createdAt": "2025-11-14T06:14:28.072152",
+    "updatedAt": "2025-11-14T06:14:28.072153"
+  },
+  {
+    "id": "prod_037",
+    "name": "Watercolors",
+    "description": "Used watercolors in good condition. Perfect for creative projects.",
+    "price": 426.52,
+    "currency": "USD",
+    "seller": "user_009",
+    "buyer": "user_015",
+    "images": [
+      "https://picsum.photos/400/300?random=14"
+    ],
+    "category": "cat8",
+    "condition": "like_new",
+    "tags": [
+      "art_crafts",
+      "campus",
+      "excellent"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Student Center"
+    },
+    "status": "removed",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 100,
+    "createdAt": "2025-11-14T06:14:28.072159",
+    "updatedAt": "2025-11-14T06:14:28.072160"
+  },
+  {
+    "id": "prod_038",
+    "name": "Yoga Mat",
+    "description": "Gently used yoga mat in excellent condition. Great for outdoor activities.",
+    "price": 41.18,
+    "currency": "USD",
+    "seller": "user_017",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=8"
+    ],
+    "category": "cat6",
+    "condition": "like_new",
+    "tags": [
+      "sports_outdoors",
+      "used",
+      "recommended"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Library"
+    },
+    "status": "removed",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 92,
+    "createdAt": "2025-11-14T06:14:28.072166",
+    "updatedAt": "2025-11-14T06:14:28.072167"
+  },
+  {
+    "id": "prod_039",
+    "name": "Socks",
+    "description": "Gently used socks. Clean and in good condition. Stylish piece.",
+    "price": 25.49,
+    "currency": "USD",
+    "seller": "user_015",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=22"
+    ],
+    "category": "cat4",
+    "condition": "fair",
+    "tags": [
+      "clothing",
+      "used",
+      "excellent"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Academic Building"
+    },
+    "status": "removed",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 96,
+    "createdAt": "2025-11-14T06:14:28.072172",
+    "updatedAt": "2025-11-14T06:14:28.072173"
+  },
+  {
+    "id": "prod_040",
+    "name": "Basketball",
+    "description": "Gently used basketball in good condition. Great for outdoor activities.",
+    "price": 308.69,
+    "currency": "USD",
+    "seller": "user_011",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=19"
+    ],
+    "category": "cat6",
+    "condition": "like_new",
+    "tags": [
+      "sports_outdoors",
+      "campus",
+      "bargain"
+    ],
+    "location": {
+      "campus": "Central Campus",
+      "area": "Library"
+    },
+    "status": "active",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 40,
+    "createdAt": "2025-11-14T06:14:28.072178",
+    "updatedAt": "2025-11-14T06:14:28.072179"
+  },
+  {
+    "id": "prod_041",
+    "name": "Clarinet",
+    "description": "Musical clarinet in good condition. Well-maintained and ready to play.",
+    "price": 202.54,
+    "currency": "USD",
+    "seller": "user_002",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=49"
+    ],
+    "category": "cat9",
+    "condition": "good",
+    "tags": [
+      "musical_instruments",
+      "campus",
+      "excellent"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Athletic Complex"
+    },
+    "status": "sold",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 8,
+    "createdAt": "2025-11-14T06:14:28.072185",
+    "updatedAt": "2025-11-14T06:14:28.072186"
+  },
+  {
+    "id": "prod_042",
+    "name": "Picture Frame",
+    "description": "picture frame in fair condition. A useful item for any student.",
+    "price": 277.28,
+    "currency": "USD",
+    "seller": "user_006",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=36"
+    ],
+    "category": "cat11",
+    "condition": "poor",
+    "tags": [
+      "other",
+      "dorm",
+      "quality"
+    ],
+    "location": {
+      "campus": "Downtown Campus",
+      "area": "Academic Building"
+    },
+    "status": "reserved",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 67,
+    "createdAt": "2025-11-14T06:14:28.072192",
+    "updatedAt": "2025-11-14T06:14:28.072193"
+  },
+  {
+    "id": "prod_043",
+    "name": "Backpack",
+    "description": "Gently used backpack. Clean and in fair condition. Brand name piece.",
+    "price": 218.53,
+    "currency": "USD",
+    "seller": "user_010",
+    "buyer": "user_007",
+    "images": [
+      "https://picsum.photos/400/300?random=17"
+    ],
+    "category": "cat4",
+    "condition": "fair",
+    "tags": [
+      "clothing",
+      "used",
+      "recommended"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Dorm Area"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 56,
+    "createdAt": "2025-11-14T06:14:28.072199",
+    "updatedAt": "2025-11-14T06:14:28.072199"
+  },
+  {
+    "id": "prod_044",
+    "name": "Sneakers",
+    "description": "Gently used sneakers. Clean and in excellent condition. Stylish piece.",
+    "price": 134.06,
+    "currency": "USD",
+    "seller": "user_005",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=24"
+    ],
+    "category": "cat4",
+    "condition": "fair",
+    "tags": [
+      "clothing",
+      "gently_used",
+      "quality"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Academic Building"
+    },
+    "status": "active",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 90,
+    "createdAt": "2025-11-14T06:14:28.072205",
+    "updatedAt": "2025-11-14T06:14:28.072206"
+  },
+  {
+    "id": "prod_045",
+    "name": "Toaster",
+    "description": "Functional toaster in excellent condition. Perfect for dorm or apartment.",
+    "price": 285.24,
+    "currency": "USD",
+    "seller": "user_006",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=19"
+    ],
+    "category": "cat5",
+    "condition": "poor",
+    "tags": [
+      "appliances",
+      "dorm",
+      "bargain"
+    ],
+    "location": {
+      "campus": "North Campus",
+      "area": "Dorm Area"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 90,
+    "createdAt": "2025-11-14T06:14:28.072211",
+    "updatedAt": "2025-11-14T06:14:28.072212"
+  },
+  {
+    "id": "prod_046",
+    "name": "Gaming Console",
+    "description": "High-quality gaming console in excellent condition. Perfect for students.",
+    "price": 445.9,
+    "currency": "USD",
+    "seller": "user_015",
+    "buyer": "user_003",
+    "images": [
+      "https://picsum.photos/400/300?random=11"
+    ],
+    "category": "cat1",
+    "condition": "good",
+    "tags": [
+      "electronics",
+      "gently_used",
+      "quality"
+    ],
+    "location": {
+      "campus": "South Campus",
+      "area": "Dorm Area"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": true,
+    "views": 32,
+    "createdAt": "2025-11-14T06:14:28.072217",
+    "updatedAt": "2025-11-14T06:14:28.072218"
+  },
+  {
+    "id": "prod_047",
+    "name": "Racquet",
+    "description": "Gently used racquet in excellent condition. Great for outdoor activities.",
+    "price": 352.46,
+    "currency": "USD",
+    "seller": "user_011",
+    "buyer": "user_001",
+    "images": [
+      "https://picsum.photos/400/300?random=35"
+    ],
+    "category": "cat6",
+    "condition": "good",
+    "tags": [
+      "sports_outdoors",
+      "campus",
+      "recommended"
+    ],
+    "location": {
+      "campus": "East Campus",
+      "area": "Library"
+    },
+    "status": "reserved",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 75,
+    "createdAt": "2025-11-14T06:14:28.072223",
+    "updatedAt": "2025-11-14T06:14:28.072224"
+  },
+  {
+    "id": "prod_048",
+    "name": "ATV",
+    "description": "Used atv in good condition. Well-maintained and reliable.",
+    "price": 492.46,
+    "currency": "USD",
+    "seller": "user_003",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=3"
+    ],
+    "category": "cat10",
+    "condition": "new",
+    "tags": [
+      "vehicles",
+      "campus",
+      "quality"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Dorm Area"
+    },
+    "status": "removed",
+    "negotiable": false,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 87,
+    "createdAt": "2025-11-14T06:14:28.072230",
+    "updatedAt": "2025-11-14T06:14:28.072231"
+  },
+  {
+    "id": "prod_049",
+    "name": "Deck Umbrella",
+    "description": "Used deck umbrella in good condition. Great for home and garden.",
+    "price": 310.99,
+    "currency": "USD",
+    "seller": "user_013",
+    "buyer": "user_014",
+    "images": [
+      "https://picsum.photos/400/300?random=30"
+    ],
+    "category": "cat7",
+    "condition": "like_new",
+    "tags": [
+      "home_garden",
+      "dorm",
+      "recommended"
+    ],
+    "location": {
+      "campus": "Main Campus",
+      "area": "Academic Building"
+    },
+    "status": "active",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 31,
+    "createdAt": "2025-11-14T06:14:28.072237",
+    "updatedAt": "2025-11-14T06:14:28.072237"
+  },
+  {
+    "id": "prod_050",
+    "name": "Backpack",
+    "description": "backpack in very good condition. A useful item for any student.",
+    "price": 421.1,
+    "currency": "USD",
+    "seller": "user_011",
+    "buyer": null,
+    "images": [
+      "https://picsum.photos/400/300?random=18"
+    ],
+    "category": "cat11",
+    "condition": "good",
+    "tags": [
+      "other",
+      "gently_used",
+      "quality"
+    ],
+    "location": {
+      "campus": "West Campus",
+      "area": "Student Center"
+    },
+    "status": "sold",
+    "negotiable": true,
+    "allowsMeetup": true,
+    "allowsShipping": false,
+    "views": 90,
+    "createdAt": "2025-11-14T06:14:28.072243",
+    "updatedAt": "2025-11-14T06:14:28.072244"
+  }
+]

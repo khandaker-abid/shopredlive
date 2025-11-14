@@ -11,7 +11,7 @@ var ProductSchema = new Schema(
         currency: {type: String, default: 'USD'},
         seller:{type: Schema.Types.ObjectId, ref: 'User', required: true},
         buyer:{type: Schema.Types.ObjectId, ref: 'User'},
-        images: [{type: Buffer}],
+        images: [{type: String}],
         category: {type: Schema.Types.ObjectId, ref: 'Category'},
         condition: {type: String, enum: ['new', 'like_new', 'good', 'fair', 'poor'], default: 'good'},
         tags: [{type: String, trim: true}],

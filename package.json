@@ -6,13 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dev:server": "cd server && node server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
+    "server": "cd server && node server.js"
   },
   "dependencies": {
-    "next": "14.2.4",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
+    "@mui/material-nextjs": "^7.3.5",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.15.0",
+    "next": "^16.0.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "eslint": "^9.24.0",
+    "eslint-plugin-only-warn": "^1.1.0",
+    "globals": "^16.0.0",
+    "nodemon": "^3.1.10"
   }
 }
-
-

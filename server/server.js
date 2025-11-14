@@ -4,6 +4,7 @@
 
 const ProductModel = require('./models/products');
 const UserModel = require('./models/users');
+const CategoryModel = require('./models/category'); // Require Category model to register it with Mongoose
 
 const express = require('express');
 const cors = require('cors');
@@ -41,7 +42,20 @@ async function encrypt(password) { //uses bcrypt and salt
 
 app.get("/db", async (req,res) => {
     try {
-        const products = await ProductModel.find().populate('seller buyer').exec()
+        const products = await ProductModel.find()
+            .populate({
+                path: 'seller',
+                select: 'name actualName profilePic email'
+            })
+            .populate({
+                path: 'buyer',
+                select: 'name actualName profilePic email'
+            })
+            .populate({
+                path: 'category',
+                select: 'name'
+            })
+            .exec()
         const users = await UserModel.find().populate("products savedProducts").exec()
         const resp = {
             products: products,
@@ -51,17 +65,32 @@ app.get("/db", async (req,res) => {
         res.json(resp)
     } catch(err) {
         console.error(err);
-        res.sendStatus(500)
+        res.status(500).json({ error: 'Failed to fetch database', details: err.message })
     }
 })
 
 app.get("/products", async (req, res) => {
     try {
-        const products = await ProductModel.find().populate('seller buyer').exec()
-        res.json(posts);
+        // Try to populate with error handling for missing references
+        const products = await ProductModel.find()
+            .populate({
+                path: 'seller',
+                select: 'name actualName profilePic email' // Only select needed fields
+            })
+            .populate({
+                path: 'buyer',
+                select: 'name actualName profilePic email' // Only select needed fields
+            })
+            .populate({
+                path: 'category',
+                select: 'name' // Only select name field
+            })
+            .exec();
+
+        res.json(products);
     } catch(err) {
-        console.error(err);
-        res.sendStatus(500)
+        console.error('Error fetching products:', err);
+        res.status(500).json({ error: 'Failed to fetch products', details: err.message });
     }
 });
 
@@ -150,7 +179,7 @@ app.get("/home/new", async (req, res) => {
 });
 
 app.get("/home/old", async (req, res) => {
-    let products = await RroductModel.find({soldOrNot: false}).sort({postedDate: 1}).exec();
+    let products = await ProductModel.find({soldOrNot: false}).sort({postedDate: 1}).exec();
     res.send(products);
 });
 //end home page
@@ -179,26 +208,111 @@ app.post('/register', async (req, res) => {
 });
 
 app.get("/product/:id", async (req, res) => {
-    let product = await productModel.findById(req.params.id).populate('seller buyer').exec();
-    res.send(product);
+    try {
+        const product = await ProductModel.findById(req.params.id)
+            .populate({
+                path: 'seller',
+                select: 'name actualName profilePic email'
+            })
+            .populate({
+                path: 'buyer',
+                select: 'name actualName profilePic email'
+            })
+            .populate({
+                path: 'category',
+                select: 'name'
+            })
+            .exec();
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        res.json(product);
+    } catch (error) {
+        console.error('Error fetching product:', error);
+        res.status(500).json({ error: 'Failed to fetch product', details: error.message });
+    }
+});
+
+// Update a product by ID
+app.patch("/product/:id", async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const updateData = req.body;
+
+        // Only update the fields that are provided in the request
+        const updatedProduct = await ProductModel.findByIdAndUpdate(
+            productId,
+            { $set: updateData },
+            { new: true, runValidators: true } // Return the updated document and run schema validation
+        ).populate('seller buyer');
+
+        if (!updatedProduct) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        res.json(updatedProduct);
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
+// Delete a product by ID
+app.delete("/product/:id", async (req, res) => {
+    try {
+        const productId = req.params.id;
+
+        const deletedProduct = await ProductModel.findByIdAndDelete(productId);
+
+        if (!deletedProduct) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Remove the product from the seller's products array
+        await UserModel.updateOne(
+            { products: productId },
+            { $pull: { products: productId } }
+        );
+
+        res.json(deletedProduct);
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
 });
 
 app.post("/newProduct", async (req, res) => {
-    const {product} = req.body
-    console.log(product)
+    const { product } = req.body;
+    console.log(product);
+
+    // Validate required fields
+    if (!product.name || !product.description || typeof product.price === 'undefined' || product.price === null) {
+        return res.status(400).json({ error: 'Name, description, and price are required' });
+    }
+
     let newProduct = new ProductModel({
         name: product.name,
         description: product.description,
-        price:product.price,
+        price: product.price,
+        currency: product.currency || 'USD',
         seller: product.seller,
-        buyer: null,
-        images: product.images,
-        soldOrNot: false,
-        views:0
+        buyer: product.buyer || null,
+        images: product.images || [],
+        category: product.category || null,
+        condition: product.condition || 'good',
+        tags: product.tags || [],
+        location: product.location || { campus: '', area: '' },
+        status: product.status || 'active',
+        negotiable: typeof product.negotiable === 'boolean' ? product.negotiable : true,
+        allowsMeetup: typeof product.allowsMeetup === 'boolean' ? product.allowsMeetup : true,
+        allowsShipping: typeof product.allowsShipping === 'boolean' ? product.allowsShipping : false,
+        views: product.views || 0
     });
-    const savedProduct = await newPost.save();
 
-    await UserModel.updateOne({_id:product.seller},{$push:{'products':savedProduct._id}})
+    const savedProduct = await newProduct.save();
 
-    res.send(savedProduct)
+    await UserModel.updateOne({_id: product.seller}, {$push: {'products': savedProduct._id}});
+
+    res.json(savedProduct)
 });
