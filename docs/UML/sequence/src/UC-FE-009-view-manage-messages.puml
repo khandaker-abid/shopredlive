@@ -1,0 +1,77 @@
+@startuml
+title UC-FE-009: View and Manage Messages
+
+actor "Authenticated User" as user
+participant "MessagesPage\n(/messages/page.js)" as messagesPage
+participant "ProtectedRoute\n(ProtectedRoute.js)" as protectedRoute
+participant "Messages\n(Messages.js)" as messages
+participant "AuthContext\n(AuthContext.js)" as authContext
+
+== Page Load & Authentication ==
+user -> messagesPage : Navigate to /messages
+messagesPage -> protectedRoute : Wrap with requireAuth=true
+protectedRoute -> protectedRoute : Check auth state
+
+alt Not authenticated
+    protectedRoute --> user : Redirect to /login
+else Authenticated
+    protectedRoute --> messagesPage : Render page
+    messagesPage -> messages : Render Messages component
+end
+
+== Check User State ==
+messages -> authContext : useAuth()
+authContext --> messages : { user }
+
+alt User not logged in
+    messages --> user : Display "Please log in to view your messages"
+    messages --> user : Show login/signup links
+else User logged in
+    messages -> messages : Initialize state
+    note right of messages
+        - selectedThread: null
+        - threads: sample data
+        - messages: sample conversation data
+        - newMessage: ''
+    end note
+    messages --> user : Display thread list (left panel)
+    messages --> user : Display "Select a conversation" prompt (right panel)
+end
+
+== Select Thread ==
+user -> messages : Click on thread item
+messages -> messages : handleSelectThread(thread)
+messages -> messages : setSelectedThread(thread)
+messages --> user : Display chat header with recipient info
+messages --> user : Display message history for thread
+messages --> user : Display message input field
+
+== Send Message ==
+user -> messages : Type message in input field
+user -> messages : Press Enter or click Send button
+messages -> messages : handleSendMessage()
+
+alt Empty message
+    messages -> messages : Do nothing
+else Valid message
+    messages -> messages : Create new message object
+    note right of messages
+        newMsg = {
+            id: Date.now(),
+            text: newMessage,
+            sender: user.name,
+            time: current time,
+            sentByUser: true
+        }
+    end note
+    messages -> messages : Add to messages state
+    messages -> messages : setNewMessage('')
+    messages --> user : Display new message in chat
+    note right of messages
+        <<inferred>> In production:
+        Would POST to /api/messages
+    end note
+end
+
+@enduml
+

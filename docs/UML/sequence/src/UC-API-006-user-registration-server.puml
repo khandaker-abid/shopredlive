@@ -1,0 +1,75 @@
+@startuml
+title UC-API-006: User Registration (Server)
+
+actor "Client" as client
+participant "Express Server\n(server.js)" as express
+control "UserModel\n(users.js)" as userModel
+participant "bcrypt" as bcrypt
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> express : POST /register
+note right of client
+    Body: {
+        first: "John",
+        last: "Doe",
+        username: "johndoe",
+        email: "john@university.edu",
+        password: "securepass123",
+        img: "profile.jpg" (optional)
+    }
+end note
+
+== Extract and Process Data ==
+express -> express : Extract { first, last, username, email, password, img }
+express -> express : console.log(username)
+
+== Password Encryption ==
+express -> bcrypt : encrypt(password)
+bcrypt -> bcrypt : genSalt(10)
+bcrypt --> bcrypt : salt
+bcrypt -> bcrypt : hash(password, salt)
+bcrypt --> express : hashword (hashed password)
+
+== Create User Document ==
+express -> userModel : new UserModel({...})
+note right of userModel
+    {
+        name: username,
+        actualName: first + ' ' + last,
+        email: email,
+        password: hashword,
+        isAdmin: false,
+        karma: 100,
+        products: [],
+        savedProducts: [],
+        profilePic: img
+    }
+end note
+
+== Save to Database ==
+userModel -> mongodb : user.save()
+
+alt Save Successful
+    mongodb --> userModel : saved user document
+    userModel --> express : Success
+    express --> client : 200 { success: true }
+else Duplicate Email/Username
+    mongodb --> userModel : Error (duplicate key)
+    userModel --> express : Error
+    express -> express : console.error("User cannot be registered", error)
+    express --> client : 200 { success: true }
+    note right of express
+        Error is logged but response
+        still sent as success.
+        <<inferred>> Should return error status
+    end note
+else Database Error
+    mongodb --> userModel : Error
+    userModel --> express : Error
+    express -> express : console.error("User cannot be registered", error)
+    express --> client : 200 { success: true }
+end
+
+@enduml
+

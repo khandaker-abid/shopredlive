@@ -1,0 +1,69 @@
+@startuml
+title UC-FE-017: Make Offer on Product
+
+actor "Authenticated Buyer" as user
+participant "ProductDetail\n(ProductDetail.js)" as productDetail
+participant "Next.js API Route\n(/api/offers)" as offersApi
+participant "In-Memory DB\n(_utils.js)" as db
+
+== View Product with Make Offer Button ==
+user -> productDetail : View product detail page
+productDetail --> user : Display product info
+productDetail --> user : Display "Make Offer" button
+
+alt Product is negotiable
+    productDetail --> user : Button enabled and visible
+else Product not negotiable
+    productDetail --> user : Button may be hidden/disabled
+end
+
+== Initiate Offer (Current Implementation) ==
+user -> productDetail : Click "Make Offer" button
+
+note over productDetail
+    Current implementation: Button only
+    displays but does not yet trigger
+    offer creation flow.
+    
+    Future implementation will include:
+    - Offer amount input modal
+    - Offer submission to API
+end note
+
+== <<inferred>> Future Offer Flow ==
+user -> productDetail : Enter offer amount
+user -> productDetail : Submit offer
+
+productDetail -> offersApi : POST /api/offers
+note right of productDetail
+    Request body: {
+        productId: product.id,
+        buyerId: user.id,
+        amount: offerAmount
+    }
+end note
+
+offersApi -> offersApi : readJson(req)
+offersApi -> offersApi : generateId('offer')
+offersApi -> db : Create offer object
+note right of offersApi
+    offer = {
+        id: generated,
+        productId,
+        buyerId,
+        amount,
+        status: 'pending',
+        createdAt: Date.now()
+    }
+end note
+db --> offersApi : Offer stored
+offersApi --> productDetail : 201 Created { offer }
+productDetail --> user : "Offer submitted!" confirmation
+
+note over user
+    Seller receives notification
+    about new offer
+end note
+
+@enduml
+

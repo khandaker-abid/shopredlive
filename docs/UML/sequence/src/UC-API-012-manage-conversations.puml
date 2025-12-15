@@ -1,0 +1,87 @@
+@startuml
+title UC-API-012: Manage Conversations
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/conversations)" as conversationsApi
+participant "Next.js API Route\n(/api/conversations/[id])" as conversationIdApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Conversations ==
+client -> conversationsApi : GET /api/conversations
+conversationsApi -> db : Read db.conversations
+db --> conversationsApi : conversations[]
+conversationsApi --> client : 200 JSON conversations[]
+
+== POST Create Conversation ==
+client -> conversationsApi : POST /api/conversations
+note right of client
+    Body: {
+        participants: [userId1, userId2],
+        productId: "product123"
+    }
+end note
+
+conversationsApi -> utils : readJson(req)
+utils --> conversationsApi : { participants, productId }
+
+conversationsApi -> utils : generateId('convo')
+utils --> conversationsApi : "convo-{random}-{timestamp}"
+
+conversationsApi -> conversationsApi : Create conversation object
+note right of conversationsApi
+    convo = {
+        id: generated,
+        participants: data.participants || [],
+        productId: data.productId || null,
+        lastMessageAt: Date.now()
+    }
+end note
+
+conversationsApi -> db : db.conversations.push(convo)
+db --> conversationsApi : Conversation stored
+conversationsApi --> client : 201 Created { conversation }
+
+== GET Single Conversation ==
+client -> conversationIdApi : GET /api/conversations/{id}
+conversationIdApi -> db : db.conversations.find(c => c.id === id)
+
+alt Conversation Found
+    db --> conversationIdApi : conversation object
+    conversationIdApi --> client : 200 JSON conversation
+else Not Found
+    db --> conversationIdApi : undefined
+    conversationIdApi --> client : 404 { error: 'Not found' }
+end
+
+== PATCH Update Conversation ==
+client -> conversationIdApi : PATCH /api/conversations/{id}
+note right of client
+    Body: { lastMessageAt: newTime, ... }
+end note
+
+conversationIdApi -> db : Find conversation by id
+
+alt Conversation Found
+    conversationIdApi -> utils : readJson(req)
+    utils --> conversationIdApi : update data
+    conversationIdApi -> conversationIdApi : Object.assign(convo, data)
+    conversationIdApi --> client : 200 JSON updated conversation
+else Not Found
+    conversationIdApi --> client : 404 { error: 'Not found' }
+end
+
+== DELETE Conversation ==
+client -> conversationIdApi : DELETE /api/conversations/{id}
+conversationIdApi -> db : Find index of conversation
+
+alt Conversation Found
+    conversationIdApi -> db : db.conversations.splice(idx, 1)
+    db --> conversationIdApi : removed conversation
+    conversationIdApi --> client : 200 JSON removed conversation
+else Not Found
+    conversationIdApi --> client : 404 { error: 'Not found' }
+end
+
+@enduml
+

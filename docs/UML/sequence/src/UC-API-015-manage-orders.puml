@@ -1,0 +1,107 @@
+@startuml
+title UC-API-015: Manage Orders
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/orders)" as ordersApi
+participant "Next.js API Route\n(/api/orders/[id])" as orderIdApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Orders ==
+client -> ordersApi : GET /api/orders
+ordersApi -> db : Read db.orders
+db --> ordersApi : orders[]
+ordersApi --> client : 200 JSON orders[]
+
+== POST Create Order ==
+client -> ordersApi : POST /api/orders
+note right of client
+    Body: {
+        productId: "product-123",
+        buyerId: "user-buyer",
+        sellerId: "user-seller",
+        price: 85.00,
+        meetup: {
+            time: "2025-12-20T14:00:00",
+            campus: "Main Campus",
+            locationDetail: "Library entrance"
+        }
+    }
+end note
+
+ordersApi -> utils : readJson(req)
+utils --> ordersApi : { productId, buyerId, sellerId, price, meetup }
+
+ordersApi -> utils : generateId('order')
+utils --> ordersApi : "order-{random}-{timestamp}"
+
+ordersApi -> ordersApi : Create order object
+note right of ordersApi
+    order = {
+        id: generated,
+        productId: data.productId,
+        buyerId: data.buyerId,
+        sellerId: data.sellerId,
+        price: data.price,
+        status: 'pending_meetup',
+        meetup: data.meetup || {},
+        createdAt: Date.now()
+    }
+end note
+
+ordersApi -> db : db.orders.push(order)
+db --> ordersApi : Order stored
+ordersApi --> client : 201 Created { order }
+
+== GET Single Order ==
+client -> orderIdApi : GET /api/orders/{id}
+orderIdApi -> db : db.orders.find(o => o.id === id)
+
+alt Order Found
+    db --> orderIdApi : order object
+    orderIdApi --> client : 200 JSON order
+else Not Found
+    db --> orderIdApi : undefined
+    orderIdApi --> client : 404 { error: 'Not found' }
+end
+
+== PATCH Update Order Status ==
+client -> orderIdApi : PATCH /api/orders/{id}
+note right of client
+    Body: { status: 'completed' }
+    or: { status: 'cancelled' }
+    or: { meetup: { time: newTime, ... } }
+end note
+
+orderIdApi -> db : Find order by id
+
+alt Order Found
+    orderIdApi -> utils : readJson(req)
+    utils --> orderIdApi : update data
+    orderIdApi -> orderIdApi : Object.assign(order, data)
+    orderIdApi --> client : 200 JSON updated order
+    
+    note over client, db
+        <<inferred>> On 'completed':
+        - Mark product as 'sold'
+        - Enable review submission
+        - Update user karma
+    end note
+else Not Found
+    orderIdApi --> client : 404 { error: 'Not found' }
+end
+
+== DELETE Order (Cancel) ==
+client -> orderIdApi : DELETE /api/orders/{id}
+orderIdApi -> db : Find index of order
+
+alt Order Found
+    orderIdApi -> db : db.orders.splice(idx, 1)
+    db --> orderIdApi : removed order
+    orderIdApi --> client : 200 JSON removed order
+else Not Found
+    orderIdApi --> client : 404 { error: 'Not found' }
+end
+
+@enduml
+

@@ -1,0 +1,75 @@
+@startuml
+title UC-API-018: Manage Notifications
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/notifications/route.js)" as notificationsApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Notifications ==
+client -> notificationsApi : GET /api/notifications
+notificationsApi -> db : Read db.notifications
+db --> notificationsApi : notifications[]
+notificationsApi --> client : 200 JSON notifications[]
+
+note over client
+    <<inferred>> Should filter by
+    recipientId for user's notifications
+end note
+
+== POST Create Notification ==
+client -> notificationsApi : POST /api/notifications
+note right of client
+    Body: {
+        recipientId: "user-123",
+        type: "offer",
+        title: "New Offer Received",
+        body: "You received a $75 offer on your iPhone."
+    }
+end note
+
+== Parse Request Body ==
+notificationsApi -> utils : readJson(req)
+utils -> utils : Parse JSON from request
+utils --> notificationsApi : { recipientId, type, title, body }
+
+== Generate Notification ID ==
+notificationsApi -> utils : generateId('notif')
+utils -> utils : Generate random + timestamp
+utils --> notificationsApi : "notif-{random}-{timestamp}"
+
+== Create Notification Object ==
+notificationsApi -> notificationsApi : Create notification object
+note right of notificationsApi
+    notification = {
+        id: generated ID,
+        recipientId: data.recipientId,
+        type: data.type || 'system',
+        title: data.title || '',
+        body: data.body || '',
+        createdAt: Date.now()
+    }
+end note
+
+== Store Notification ==
+notificationsApi -> db : db.notifications.push(notification)
+db --> notificationsApi : Notification stored
+
+== Response ==
+notificationsApi --> client : 201 Created { notification }
+
+note over client, db
+    Notification Types:
+    - 'message': New message received
+    - 'offer': New offer on product
+    - 'order': Order status update
+    - 'system': System announcements
+    
+    <<inferred>> Additional features:
+    - readAt timestamp when viewed
+    - Push notification integration
+    - Email notification option
+end note
+
+@enduml
+

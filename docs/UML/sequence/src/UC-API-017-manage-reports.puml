@@ -1,0 +1,76 @@
+@startuml
+title UC-API-017: Manage Reports
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/reports/route.js)" as reportsApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Reports ==
+client -> reportsApi : GET /api/reports
+reportsApi -> db : Read db.reports
+db --> reportsApi : reports[]
+reportsApi --> client : 200 JSON reports[]
+
+note over client
+    <<inferred>> GET should be
+    restricted to admins only
+end note
+
+== POST Create Report ==
+client -> reportsApi : POST /api/reports
+note right of client
+    Body: {
+        reporterId: "user-reporter-123",
+        targetUserId: "user-violator-456",
+        targetProductId: null,
+        reason: "Inappropriate content",
+        details: "User posted offensive messages in our conversation."
+    }
+end note
+
+== Parse Request Body ==
+reportsApi -> utils : readJson(req)
+utils -> utils : Parse JSON from request
+utils --> reportsApi : { reporterId, targetUserId, targetProductId, reason, details }
+
+== Generate Report ID ==
+reportsApi -> utils : generateId('report')
+utils -> utils : Generate random + timestamp
+utils --> reportsApi : "report-{random}-{timestamp}"
+
+== Create Report Object ==
+reportsApi -> reportsApi : Create report object
+note right of reportsApi
+    report = {
+        id: generated ID,
+        reporterId: data.reporterId,
+        targetUserId: data.targetUserId,
+        targetProductId: data.targetProductId,
+        reason: data.reason,
+        details: data.details || '',
+        status: 'open',
+        createdAt: Date.now()
+    }
+end note
+
+== Store Report ==
+reportsApi -> db : db.reports.push(report)
+db --> reportsApi : Report stored
+
+== Response ==
+reportsApi --> client : 201 Created { report }
+
+note over client, db
+    Report Status Workflow:
+    open → reviewing → resolved/dismissed
+    
+    <<inferred>> Admin actions needed:
+    - Review reported content
+    - Take action (warn, suspend, ban)
+    - Update report status
+    - Notify reporter of resolution
+end note
+
+@enduml
+
