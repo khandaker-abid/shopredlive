@@ -1,0 +1,57 @@
+@startuml
+title UC-API-004: Update Product
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/products/[id]/route.js)" as nextApi
+participant "Express Server\n(server.js)" as express
+control "ProductModel\n(products.js)" as productModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> nextApi : PATCH /api/products/{id}
+note right of client
+    Body: {
+        field1: newValue1,
+        field2: newValue2,
+        ...
+    }
+end note
+
+nextApi -> nextApi : Extract id from params
+nextApi -> nextApi : Parse JSON body
+nextApi -> express : PATCH /product/{id}\n{ updateData }
+
+== Express Handler ==
+express -> express : Extract productId from req.params
+express -> express : Extract updateData from req.body
+
+express -> productModel : ProductModel.findByIdAndUpdate(\n  productId,\n  { $set: updateData },\n  { new: true, runValidators: true }\n)
+note right of productModel
+    Options:
+    - new: true → return updated doc
+    - runValidators: true → validate schema
+end note
+
+productModel -> mongodb : Find and update document
+
+alt Product Found and Updated
+    productModel -> productModel : populate('seller buyer')
+    mongodb --> productModel : updatedProduct
+    productModel --> express : updated product object
+    express --> nextApi : JSON updatedProduct
+    nextApi --> client : 200 OK { product }
+else Product Not Found
+    mongodb --> productModel : null
+    productModel --> express : null
+    express --> nextApi : 404 { error: 'Product not found' }
+    nextApi --> client : 404 { error: 'Product not found' }
+else Validation/Database Error
+    mongodb --> productModel : Error
+    productModel --> express : Error thrown
+    express -> express : console.error()
+    express --> nextApi : 500 { error: 'Failed to update product' }
+    nextApi --> client : 500 { error: 'Failed to update product' }
+end
+
+@enduml
+

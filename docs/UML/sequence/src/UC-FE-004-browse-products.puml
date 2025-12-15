@@ -1,0 +1,70 @@
+@startuml
+title UC-FE-004: Browse Product Listings (Home Page)
+
+actor "Authenticated User" as user
+participant "HomePage\n(page.js)" as homePage
+participant "AuthContext\n(AuthContext.js)" as authContext
+participant "Header\n(Header.js)" as header
+participant "Sidebar\n(Sidebar.js)" as sidebar
+participant "ProductGrid\n(ProductGrid.js)" as productGrid
+participant "ProductCard\n(ProductCard.js)" as productCard
+participant "Next.js API Route\n(/api/products)" as apiRoute
+participant "Express Server\n(server.js)" as expressServer
+database "MongoDB" as mongodb
+
+== Page Load & Authentication Check ==
+user -> homePage : Navigate to /
+homePage -> authContext : useAuth()
+authContext --> homePage : { user, loading }
+
+alt Loading state
+    homePage --> user : Display "Loading..."
+else Not authenticated
+    homePage -> homePage : router.push('/login')
+    homePage --> user : Redirect to login
+else Authenticated
+    homePage --> user : Render main layout
+end
+
+== Component Rendering ==
+homePage -> header : Render Header
+homePage -> sidebar : Render Sidebar
+homePage -> productGrid : Render ProductGrid
+
+== Fetch Products ==
+productGrid -> productGrid : useEffect() on mount
+productGrid -> productGrid : setLoading(true)
+productGrid -> apiRoute : fetch('/api/products')
+apiRoute -> expressServer : GET /products
+expressServer -> mongodb : ProductModel.find()
+expressServer -> mongodb : populate('seller', 'buyer', 'category')
+mongodb --> expressServer : products[]
+expressServer --> apiRoute : JSON products[]
+apiRoute --> productGrid : Response JSON
+
+alt API Success
+    productGrid -> productGrid : setProducts(data)
+else API Failure
+    productGrid -> productGrid : Use MOCK_PRODUCTS fallback
+    note right of productGrid
+        Generate 12 mock products
+        with sample data
+    end note
+end
+
+productGrid -> productGrid : setLoading(false)
+
+== Filter Products ==
+productGrid -> productGrid : Read searchParams (q, category)
+productGrid -> productGrid : Filter products by search query
+productGrid -> productGrid : Filter products by category
+
+== Render Product Cards ==
+loop for each filtered product
+    productGrid -> productCard : Render ProductCard(product)
+    productCard --> productGrid : Card component
+end
+productGrid --> user : Display product grid (5 per row on large screens)
+
+@enduml
+

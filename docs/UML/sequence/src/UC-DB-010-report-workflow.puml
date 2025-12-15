@@ -1,0 +1,123 @@
+@startuml
+title UC-DB-010: Report Workflow
+
+actor "Reporter" as reporter
+actor "Admin" as admin
+participant "Frontend" as frontend
+participant "Reports API\n(/api/reports)" as reportsApi
+participant "Users API" as usersApi
+participant "Products API" as productsApi
+participant "Notifications API" as notifApi
+database "MongoDB\n(Report Schema)" as mongodb
+
+== User Submits Report ==
+reporter -> frontend : Navigate to report form
+reporter -> frontend : Select reason and enter details
+frontend -> reportsApi : POST /api/reports
+note right of frontend
+    {
+        reporterId: "user-reporter",
+        targetUserId: "user-offender",
+        targetProductId: null,
+        reason: "Harassment",
+        details: "User sent threatening messages..."
+    }
+end note
+
+reportsApi -> mongodb : Create Report document
+note right of reportsApi
+    Report Schema Fields:
+    - reporter: ObjectId (ref: User)
+    - targetUser: ObjectId (ref: User)
+    - targetProduct: ObjectId (ref: Product)
+    - reason: String (required)
+    - details: String (maxLength: 5000)
+    - status: 'open'
+    - timestamps: true
+end note
+
+mongodb --> reportsApi : Report created
+reportsApi --> frontend : 201 { report }
+frontend --> reporter : "Report submitted successfully"
+
+== Admin Reviews Reports ==
+admin -> frontend : View reports queue
+frontend -> reportsApi : GET /api/reports
+reportsApi -> mongodb : Query reports (status: 'open')
+mongodb --> reportsApi : open reports[]
+reportsApi --> frontend : reports[]
+
+admin -> frontend : Select report to review
+frontend -> reportsApi : PATCH /api/reports/{id}
+note right of frontend
+    { status: 'reviewing' }
+end note
+
+reportsApi -> mongodb : Update status
+mongodb --> reportsApi : Updated
+
+== Admin Takes Action ==
+alt Valid Report - User Violation
+    admin -> frontend : View reported user profile
+    admin -> usersApi : GET /api/users/{targetUserId}
+    usersApi --> frontend : user details
+    
+    admin -> frontend : Apply penalty
+    admin -> usersApi : PATCH /api/users/{id}
+    note right of frontend
+        { karma: user.karma - 50 }
+        or { suspended: true }
+    end note
+    
+    frontend -> reportsApi : PATCH /api/reports/{id}
+    note right of frontend
+        { status: 'resolved' }
+    end note
+    
+    frontend -> notifApi : POST /api/notifications
+    note right of frontend
+        Notify reporter:
+        "Action taken on your report"
+    end note
+    
+    frontend -> notifApi : POST /api/notifications
+    note right of frontend
+        Notify offender:
+        "Warning: Policy violation"
+    end note
+
+else Valid Report - Product Violation
+    admin -> frontend : View reported product
+    admin -> productsApi : GET /api/products/{targetProductId}
+    productsApi --> frontend : product details
+    
+    admin -> productsApi : PATCH /api/products/{id}
+    note right of frontend
+        { status: 'removed' }
+    end note
+    
+    frontend -> reportsApi : PATCH /api/reports/{id}
+    note right of frontend
+        { status: 'resolved' }
+    end note
+
+else Invalid/False Report
+    admin -> frontend : Dismiss report
+    frontend -> reportsApi : PATCH /api/reports/{id}
+    note right of frontend
+        { status: 'dismissed' }
+    end note
+    
+    frontend -> notifApi : Notify reporter
+    note right of frontend
+        "Report reviewed - no violation found"
+    end note
+end
+
+note over admin, mongodb
+    Report Status Flow:
+    open → reviewing → resolved/dismissed
+end note
+
+@enduml
+

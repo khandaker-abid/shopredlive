@@ -1,0 +1,99 @@
+@startuml
+title UC-API-014: Manage Offers
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/offers)" as offersApi
+participant "Next.js API Route\n(/api/offers/[id])" as offerIdApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Offers ==
+client -> offersApi : GET /api/offers
+offersApi -> db : Read db.offers
+db --> offersApi : offers[]
+offersApi --> client : 200 JSON offers[]
+
+== POST Create Offer ==
+client -> offersApi : POST /api/offers
+note right of client
+    Body: {
+        productId: "product-123",
+        buyerId: "user-456",
+        amount: 75.00
+    }
+end note
+
+offersApi -> utils : readJson(req)
+utils --> offersApi : { productId, buyerId, amount }
+
+offersApi -> utils : generateId('offer')
+utils --> offersApi : "offer-{random}-{timestamp}"
+
+offersApi -> offersApi : Create offer object
+note right of offersApi
+    offer = {
+        id: generated,
+        productId: data.productId,
+        buyerId: data.buyerId,
+        amount: data.amount,
+        status: 'pending',
+        createdAt: Date.now()
+    }
+end note
+
+offersApi -> db : db.offers.push(offer)
+db --> offersApi : Offer stored
+offersApi --> client : 201 Created { offer }
+
+== GET Single Offer ==
+client -> offerIdApi : GET /api/offers/{id}
+offerIdApi -> db : db.offers.find(o => o.id === id)
+
+alt Offer Found
+    db --> offerIdApi : offer object
+    offerIdApi --> client : 200 JSON offer
+else Not Found
+    db --> offerIdApi : undefined
+    offerIdApi --> client : 404 { error: 'Not found' }
+end
+
+== PATCH Update Offer (Accept/Decline) ==
+client -> offerIdApi : PATCH /api/offers/{id}
+note right of client
+    Body: { status: 'accepted' }
+    or: { status: 'declined' }
+    or: { status: 'withdrawn' }
+end note
+
+offerIdApi -> db : Find offer by id
+
+alt Offer Found
+    offerIdApi -> utils : readJson(req)
+    utils --> offerIdApi : { status, ... }
+    offerIdApi -> offerIdApi : Object.assign(offer, data)
+    offerIdApi --> client : 200 JSON updated offer
+    
+    note over client, db
+        <<inferred>> On 'accepted':
+        - Create order
+        - Update product status
+        - Notify buyer
+    end note
+else Not Found
+    offerIdApi --> client : 404 { error: 'Not found' }
+end
+
+== DELETE Offer (Withdraw) ==
+client -> offerIdApi : DELETE /api/offers/{id}
+offerIdApi -> db : Find index of offer
+
+alt Offer Found
+    offerIdApi -> db : db.offers.splice(idx, 1)
+    db --> offerIdApi : removed offer
+    offerIdApi --> client : 200 JSON removed offer
+else Not Found
+    offerIdApi --> client : 404 { error: 'Not found' }
+end
+
+@enduml
+

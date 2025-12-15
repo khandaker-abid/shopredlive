@@ -1,0 +1,55 @@
+@startuml
+title UC-API-001: Fetch All Products
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/products/route.js)" as nextApi
+participant "Express Server\n(server.js)" as express
+control "ProductModel\n(products.js)" as productModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> nextApi : GET /api/products
+nextApi -> nextApi : Read BACKEND_URL from env\n(default: http://localhost:8000)
+nextApi -> express : GET /products
+
+== Express Handler ==
+express -> productModel : ProductModel.find()
+productModel -> mongodb : Query all products
+
+== Populate References ==
+express -> productModel : populate('seller')
+note right of productModel
+    Select: name, actualName,
+    profilePic, email
+end note
+
+express -> productModel : populate('buyer')
+note right of productModel
+    Select: name, actualName,
+    profilePic, email
+end note
+
+express -> productModel : populate('category')
+note right of productModel
+    Select: name
+end note
+
+express -> productModel : exec()
+productModel -> mongodb : Execute populated query
+
+alt Database Success
+    mongodb --> productModel : products[] with populated refs
+    productModel --> express : products array
+    express --> nextApi : JSON products[]
+    nextApi --> client : 200 OK { products[] }
+else Database Error
+    mongodb --> productModel : Error
+    productModel --> express : Error thrown
+    express -> express : console.error(err)
+    express --> nextApi : 500 { error, details }
+    nextApi -> nextApi : console.error()
+    nextApi --> client : 500 { error: 'Failed to fetch products' }
+end
+
+@enduml
+

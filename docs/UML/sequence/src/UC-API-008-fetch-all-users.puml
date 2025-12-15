@@ -1,0 +1,43 @@
+@startuml
+title UC-API-008: Fetch All Users
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/users/route.js)" as nextApi
+participant "Express Server\n(server.js)" as express
+control "UserModel\n(users.js)" as userModel
+database "MongoDB" as mongodb
+
+== Next.js API Route Flow ==
+client -> nextApi : GET /api/users
+nextApi -> nextApi : Access in-memory db.users
+nextApi --> client : 200 JSON db.users[]
+
+== Express Server Flow (Alternative) ==
+client -> express : GET /users
+
+express -> userModel : UserModel.find()
+userModel -> mongodb : Query all users
+
+express -> userModel : populate("products savedProducts")
+note right of userModel
+    Populate user's product references:
+    - products: items user is selling
+    - savedProducts: saved/wishlisted items
+end note
+
+express -> userModel : exec()
+userModel -> mongodb : Execute populated query
+
+alt Database Success
+    mongodb --> userModel : users[] with populated refs
+    userModel --> express : users array
+    express --> client : 200 JSON users[]
+else Database Error
+    mongodb --> userModel : Error
+    userModel --> express : Error thrown
+    express -> express : console.error(err)
+    express --> client : 500 Internal Server Error
+end
+
+@enduml
+
