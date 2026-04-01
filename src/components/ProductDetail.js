@@ -1,55 +1,179 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, Box, Typography, Chip, Card, CardMedia } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import {
+  Button,
+  Box,
+  Typography,
+  Chip,
+  CardMedia,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Avatar,
+  Snackbar,
+  Alert
+} from '@mui/material';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import FlagIcon from '@mui/icons-material/Flag';
+import MessageIcon from '@mui/icons-material/Message';
+import { useAuth } from '../context/AuthContext';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export default function ProductDetail({ id }) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState('');
+  const [offerMessage, setOfferMessage] = useState('');
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(`/api/products/${id}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setProduct(data);
-      } catch (err) {
-        setError(err.message);
-        console.error('Error fetching product:', err);
-
-        // Fallback to mock data
-        setProduct({
-          id: id,
-          name: `Sample Item ${id}`,
-          price: 42.00,
-          description: 'Simple description of the item. Condition: Good. Pickup on campus.',
-          condition: 'good',
-          status: 'active',
-          negotiable: true,
-          allowsMeetup: true,
-          allowsShipping: false,
-          views: 24,
-          seller: { actualName: 'Sample Seller' },
-          category: { name: 'Electronics' },
-          images: [],
-          createdAt: new Date().toISOString()
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProduct();
+    incrementViews();
   }, [id]);
 
+  useEffect(() => {
+    if (user && product) {
+      checkIfSaved();
+    }
+  }, [user, product]);
+
+  const fetchProduct = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/product/${id}`);
+      if (!response.ok) throw new Error('Product not found');
+      const data = await response.json();
+      setProduct(data);
+    } catch (err) {
+      console.error('Error fetching product:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const incrementViews = async () => {
+    try {
+      await fetch(`${BACKEND_URL}/product/${id}/view`, { method: 'POST' });
+    } catch (err) {
+      console.error('Error incrementing views:', err);
+    }
+  };
+
+  const checkIfSaved = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/user/${user._id}`);
+      const userData = await res.json();
+      setSaved(userData.savedProducts?.some(p => p._id === id || p === id));
+    } catch (err) {
+      console.error('Error checking saved:', err);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    try {
+      const endpoint = saved ? 'unsave-product' : 'save-product';
+      await fetch(`${BACKEND_URL}/user/${user._id}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: id })
+      });
+      setSaved(!saved);
+      setSnackbar({ open: true, message: saved ? 'Removed from saved' : 'Saved!', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Error saving product', severity: 'error' });
+    }
+  };
+
+  const handleMakeOffer = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    try {
+      await fetch(`${BACKEND_URL}/offers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: id,
+          buyerId: user._id,
+          amount: parseFloat(offerAmount),
+          message: offerMessage
+        })
+      });
+      setOfferOpen(false);
+      setOfferAmount('');
+      setOfferMessage('');
+      setSnackbar({ open: true, message: 'Offer sent successfully!', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Error sending offer', severity: 'error' });
+    }
+  };
+
+  const handleStartConversation = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    try {
+      const res = await fetch(`${BACKEND_URL}/conversations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participants: [user._id, product.seller._id],
+          productId: id
+        })
+      });
+      await res.json();
+      router.push('/messages');
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Error starting conversation', severity: 'error' });
+    }
+  };
+
+  const handleReport = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    try {
+      await fetch(`${BACKEND_URL}/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reporterId: user._id,
+          targetProductId: id,
+          reason: reportReason,
+          details: reportDetails
+        })
+      });
+      setReportOpen(false);
+      setReportReason('');
+      setReportDetails('');
+      setSnackbar({ open: true, message: 'Report submitted', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Error submitting report', severity: 'error' });
+    }
+  };
+
   if (loading) return <div>Loading product details...</div>;
-  if (error) return <div>Error loading product: {error}</div>;
   if (!product) return <div>Product not found</div>;
 
-  // Condition labels
   const conditionLabels = {
     'new': 'New',
     'like_new': 'Like New',
@@ -57,9 +181,7 @@ export default function ProductDetail({ id }) {
     'fair': 'Fair',
     'poor': 'Poor'
   };
-  const conditionLabel = conditionLabels[product.condition] || product.condition;
 
-  // Format date
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -68,20 +190,17 @@ export default function ProductDetail({ id }) {
     });
   };
 
+  const isOwnProduct = user && product.seller?._id === user._id;
+
   return (
     <Box sx={{ display: { xs: 'block', md: 'grid' }, gridTemplateColumns: '1fr 1fr', gap: 3, p: 2 }}>
       <Box>
         {product.images && product.images.length > 0 ? (
           <CardMedia
             component="img"
-            image={Array.isArray(product.images) ? product.images[0] : product.images}
+            image={product.images[0].startsWith('/') ? `${BACKEND_URL}${product.images[0]}` : product.images[0]}
             alt={product.name}
-            sx={{
-              borderRadius: 2,
-              maxHeight: 400,
-              objectFit: 'contain',
-              width: '100%'
-            }}
+            sx={{ borderRadius: 2, maxHeight: 400, objectFit: 'contain', width: '100%' }}
           />
         ) : (
           <Box sx={{
@@ -101,9 +220,19 @@ export default function ProductDetail({ id }) {
       </Box>
 
       <Box>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          {product.name}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+          <Typography variant="h4" fontWeight={700}>
+            {product.name}
+          </Typography>
+          <Box>
+            <IconButton onClick={handleSave} color={saved ? 'primary' : 'default'}>
+              {saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+            </IconButton>
+            <IconButton onClick={() => setReportOpen(true)} color="default">
+              <FlagIcon />
+            </IconButton>
+          </Box>
+        </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Typography variant="h5" color="primary" fontWeight={700}>
@@ -116,22 +245,31 @@ export default function ProductDetail({ id }) {
 
         <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
           <Chip label={product.category?.name || 'Uncategorized'} variant="outlined" />
-          <Chip label={`Condition: ${conditionLabel}`} variant="outlined" />
+          <Chip label={`Condition: ${conditionLabels[product.condition] || product.condition}`} variant="outlined" />
           <Chip label={product.status.charAt(0).toUpperCase() + product.status.slice(1)} variant="outlined" />
           {product.allowsMeetup && <Chip label="Meetup Available" variant="outlined" />}
           {product.allowsShipping && <Chip label="Shipping Available" variant="outlined" />}
         </Box>
 
-        <Button
-          variant="contained"
-          sx={{
-            mb: 3,
-            backgroundColor: '#0654ba',
-            '&:hover': { backgroundColor: '#054396' }
-          }}
-        >
-          Make Offer
-        </Button>
+        {!isOwnProduct && product.status === 'active' && (
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Button
+              variant="contained"
+              onClick={() => setOfferOpen(true)}
+              sx={{ flex: 1 }}
+            >
+              Make Offer
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<MessageIcon />}
+              onClick={handleStartConversation}
+              sx={{ flex: 1 }}
+            >
+              Message Seller
+            </Button>
+          </Box>
+        )}
 
         <Typography variant="h6" gutterBottom>
           Description
@@ -140,13 +278,29 @@ export default function ProductDetail({ id }) {
           {product.description}
         </Typography>
 
+        {product.location?.campus && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Location: {product.location.campus}{product.location.area && ` - ${product.location.area}`}
+          </Typography>
+        )}
+
         <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #eee' }}>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
             Seller Information
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {product.seller?.actualName || product.seller?.name || 'Unknown Seller'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar src={product.seller?.profilePic} sx={{ width: 48, height: 48 }}>
+              {product.seller?.actualName?.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography variant="body1" fontWeight={500}>
+                {product.seller?.actualName || product.seller?.name || 'Unknown Seller'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Karma: {product.seller?.karma || 100}
+              </Typography>
+            </Box>
+          </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Listed on: {formatDate(product.createdAt)}
           </Typography>
@@ -155,8 +309,83 @@ export default function ProductDetail({ id }) {
           </Typography>
         </Box>
       </Box>
+
+      <Dialog open={offerOpen} onClose={() => setOfferOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Make an Offer</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Asking price: ${product.price}
+          </Typography>
+          <TextField
+            label="Your Offer ($)"
+            type="number"
+            value={offerAmount}
+            onChange={(e) => setOfferAmount(e.target.value)}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="Message (optional)"
+            value={offerMessage}
+            onChange={(e) => setOfferMessage(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOfferOpen(false)}>Cancel</Button>
+          <Button onClick={handleMakeOffer} variant="contained" disabled={!offerAmount}>
+            Send Offer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={reportOpen} onClose={() => setReportOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Report Listing</DialogTitle>
+        <DialogContent>
+          <TextField
+            select
+            label="Reason"
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            fullWidth
+            sx={{ mb: 2, mt: 1 }}
+            SelectProps={{ native: true }}
+          >
+            <option value="">Select a reason</option>
+            <option value="prohibited">Prohibited item</option>
+            <option value="scam">Suspected scam</option>
+            <option value="inappropriate">Inappropriate content</option>
+            <option value="duplicate">Duplicate listing</option>
+            <option value="other">Other</option>
+          </TextField>
+          <TextField
+            label="Details"
+            value={reportDetails}
+            onChange={(e) => setReportDetails(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportOpen(false)}>Cancel</Button>
+          <Button onClick={handleReport} variant="contained" color="error" disabled={!reportReason}>
+            Submit Report
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
-
-

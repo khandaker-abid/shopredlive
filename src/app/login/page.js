@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Card, CardContent, Typography, TextField, Button, Link, Divider, Container } from '@mui/material';
+import { Box, Card, CardContent, Typography, TextField, Button, Link, Divider, Container, Alert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
 
@@ -17,41 +20,46 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    // Simple validation
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
 
-    // For now, simulate a login process
-    // In a real app, you would call an API to authenticate the user
-    const userData = {
-      id: 1,
-      email: email,
-      name: email.split('@')[0], // Use part of email as name for demo
-      avatar: null
-    };
+    setLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/users/verify-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
 
-    login(userData);
-    router.push('/'); // Redirect to home after login
-  };
+      if (!data.validEmail) {
+        setError('Email not found');
+        return;
+      }
+      if (!data.validPassword) {
+        setError('Invalid password');
+        return;
+      }
 
-  const handleDemoLogin = () => {
-    const demoUser = {
-      id: 1,
-      email: 'demo@example.com',
-      name: 'Demo User',
-      avatar: null
-    };
-    login(demoUser);
-    router.push('/');
+      const userRes = await fetch(`${BACKEND_URL}/user/${data.userId}`);
+      const userData = await userRes.json();
+
+      login(userData);
+      router.push('/');
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <ProtectedRoute requireAuth={false}>
-      <Box 
-        sx={{ 
-          minHeight: '100vh', 
+      <Box
+        sx={{
+          minHeight: '100vh',
           backgroundColor: 'background.default',
           display: 'flex',
           alignItems: 'center',
@@ -60,10 +68,10 @@ export default function LoginPage() {
         }}
       >
         <Container maxWidth="sm">
-          <Card 
-            sx={{ 
-              maxWidth: 350, 
-              margin: 'auto', 
+          <Card
+            sx={{
+              maxWidth: 350,
+              margin: 'auto',
               backgroundColor: 'background.paper',
               borderRadius: 2,
               boxShadow: 3
@@ -71,13 +79,9 @@ export default function LoginPage() {
           >
             <CardContent sx={{ padding: 4 }}>
               <Box sx={{ textAlign: 'center', marginBottom: 3 }}>
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
-                    fontWeight: 800, 
-                    color: 'text.primary',
-                    marginBottom: 1
-                  }}
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 800, color: 'text.primary', marginBottom: 1 }}
                 >
                   ShopRedLive
                 </Typography>
@@ -87,9 +91,9 @@ export default function LoginPage() {
               </Box>
 
               {error && (
-                <Typography color="error" variant="body2" align="center" sx={{ marginBottom: 2 }}>
+                <Alert severity="error" sx={{ marginBottom: 2 }}>
                   {error}
-                </Typography>
+                </Alert>
               )}
 
               <form onSubmit={handleSubmit}>
@@ -101,29 +105,8 @@ export default function LoginPage() {
                   margin="normal"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  InputLabelProps={{
-                    sx: {
-                      color: 'text.secondary',
-                      '&.Mui-focused': {
-                        color: 'primary.main',
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    sx: {
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'divider',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    },
-                  }}
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Password"
@@ -132,33 +115,13 @@ export default function LoginPage() {
                   margin="normal"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  InputLabelProps={{
-                    sx: {
-                      color: 'text.secondary',
-                      '&.Mui-focused': {
-                        color: 'primary.main',
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    sx: {
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'divider',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    },
-                  }}
                 />
-                
+
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
+                  disabled={loading}
                   sx={{
                     marginTop: 2,
                     marginBottom: 2,
@@ -169,12 +132,10 @@ export default function LoginPage() {
                     fontSize: '16px',
                     padding: 1.2,
                     borderRadius: 2,
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    },
+                    '&:hover': { backgroundColor: 'primary.dark' },
                   }}
                 >
-                  Log In
+                  {loading ? 'Logging in...' : 'Log In'}
                 </Button>
               </form>
 
@@ -186,42 +147,19 @@ export default function LoginPage() {
                 </Divider>
               </Box>
 
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={handleDemoLogin}
-                sx={{
-                  marginBottom: 2,
-                  borderColor: 'primary.main',
-                  color: 'primary.main',
-                  fontWeight: 'bold',
-                  textTransform: 'none',
-                  fontSize: '16px',
-                  padding: 1.2,
-                  borderRadius: 2,
-                  '&:hover': {
-                    borderColor: 'primary.dark',
-                    backgroundColor: 'rgba(139, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                Continue as Demo User
-              </Button>
-
               <Box sx={{ textAlign: 'center', marginTop: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   Don't have an account?{' '}
-                  <Link 
-                    href="/signup" 
+                  <Link
+                    href="/signup"
                     underline="hover"
-                    sx={{ 
-                      color: 'primary.main',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }}
+                    sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     Sign up
                   </Link>
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Use your @stonybrook.edu email for verified status
                 </Typography>
               </Box>
             </CardContent>

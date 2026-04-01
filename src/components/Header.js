@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/Search';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const searchParams = useSearchParams();
@@ -20,11 +21,10 @@ export default function Header() {
   const [q, setQ] = useState('');
   const timeoutRef = useRef(null);
 
-  useEffect(() => { 
-    setQ(searchParams.get('q') || ''); 
+  useEffect(() => {
+    setQ(searchParams.get('q') || '');
   }, [searchParams]);
 
-  // Debounce search to avoid too many updates
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -35,14 +35,13 @@ export default function Header() {
       if (q) {
         params.set('q', q);
       } else if (searchParams.get('q')) {
-        // Only delete if there was a previous search term
         params.delete('q');
       }
-      
+
       if (params.toString() !== searchParams.toString()) {
         router.push(`${pathname}?${params.toString()}`);
       }
-    }, 300); // 300ms delay
+    }, 300);
 
     return () => {
       if (timeoutRef.current) {
@@ -62,10 +61,10 @@ export default function Header() {
     <AppBar
       position="sticky"
       sx={{
-        backgroundColor: '#121212',  // Solid dark background
+        backgroundColor: '#121212',
         borderBottom: '1px solid',
         borderColor: 'divider',
-        zIndex: 1200  // Ensure header stays on top
+        zIndex: 1200
       }}
     >
       <Toolbar sx={{ gap: 2 }}>
@@ -86,7 +85,7 @@ export default function Header() {
                 </InputAdornment>
               ),
               sx: {
-                backgroundColor: '#1e1e1e',  // Dark background for search
+                backgroundColor: '#1e1e1e',
                 borderRadius: '20px',
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'divider',
@@ -101,8 +100,8 @@ export default function Header() {
             }}
             sx={{
               '& .MuiInputBase-input': {
-                py: '8px',  // Vertical padding
-                px: '12px', // Horizontal padding
+                py: '8px',
+                px: '12px',
               }
             }}
           />
@@ -117,6 +116,7 @@ export default function Header() {
             <Button onClick={handleLogout} color="secondary">
               Logout
             </Button>
+            <NotificationBell />
           </>
         ) : (
           <>

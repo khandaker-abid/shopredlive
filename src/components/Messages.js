@@ -1,35 +1,132 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Box, 
-  Paper, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemText, 
-  Typography, 
-  Divider, 
-  TextField, 
-  Button, 
+import { useState, useEffect, useRef } from 'react';
+import {
+  Box,
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography,
+  TextField,
   Avatar,
   IconButton,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import SendIcon from '@mui/icons-material/Send';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
 export default function Messages() {
   const { user } = useAuth();
-  const [selectedThread, setSelectedThread] = useState(null);
-  
+  const [conversations, setConversations] = useState([]);
+  const [selectedConvo, setSelectedConvo] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef(null);
+  const pollIntervalRef = useRef(null);
+
+  useEffect(() => {
+    if (user?._id) {
+      fetchConversations();
+      pollIntervalRef.current = setInterval(fetchConversations, 10000);
+    }
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedConvo) {
+      fetchMessages(selectedConvo._id);
+      markAsRead(selectedConvo._id);
+    }
+  }, [selectedConvo]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const fetchConversations = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/conversations/${user._id}`);
+      const data = await res.json();
+      setConversations(data);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (convoId) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/conversation/${convoId}/messages`);
+      const data = await res.json();
+      setMessages(data);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  const markAsRead = async (convoId) => {
+    try {
+      await fetch(`${BACKEND_URL}/conversation/${convoId}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user._id })
+      });
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConvo || sending) return;
+    setSending(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/conversation/${selectedConvo._id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderId: user._id, body: newMessage })
+      });
+      const msg = await res.json();
+      setMessages(prev => [...prev, msg]);
+      setNewMessage('');
+      fetchConversations();
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const getOtherParticipant = (convo) => {
+    return convo.participants?.find(p => p._id !== user._id) || {};
+  };
+
+  const formatTime = (dateStr) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    if (diff < 60000) return 'now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return date.toLocaleDateString();
+  };
+
   if (!user) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
           height: '70vh',
           backgroundColor: 'background.default',
           padding: 2
@@ -48,57 +145,8 @@ export default function Messages() {
     );
   }
 
-  // Sample thread data
-  const threads = [
-    { id: '1', with: 'Alice Johnson', last: 'Is this still available?', time: '2m ago', unread: true },
-    { id: '2', with: 'Bob Smith', last: 'Can pick up tomorrow', time: '1h ago', unread: false },
-    { id: '3', with: 'Charlie Brown', last: 'When can you meet?', time: '3h ago', unread: true },
-    { id: '4', with: 'Diana Prince', last: 'Thanks for the purchase!', time: '1d ago', unread: false },
-    { id: '5', with: 'Eve Wilson', last: 'Is the price negotiable?', time: '2d ago', unread: false },
-  ];
-
-  // Sample messages for the selected thread
-  const [messages, setMessages] = useState({
-    '1': [
-      { id: 1, text: 'Hi, is this still available?', sender: 'Alice Johnson', time: '10:30 AM', sentByUser: false },
-      { id: 2, text: 'Yes, it\'s still available!', sender: user.name || 'You', time: '10:32 AM', sentByUser: true },
-      { id: 3, text: 'Great! Can I pick it up tomorrow?', sender: 'Alice Johnson', time: '10:33 AM', sentByUser: false },
-      { id: 4, text: 'Sure, what time works for you?', sender: user.name || 'You', time: '10:35 AM', sentByUser: true },
-    ],
-    '2': [
-      { id: 1, text: 'Hey, can I pick this up tomorrow?', sender: 'Bob Smith', time: '9:15 AM', sentByUser: false },
-      { id: 2, text: 'Yes, I\'ll be available after 3pm', sender: user.name || 'You', time: '9:18 AM', sentByUser: true },
-    ]
-  });
-
-  const [newMessage, setNewMessage] = useState('');
-
-  const handleSendMessage = () => {
-    if (newMessage.trim() && selectedThread) {
-      // In a real app, this would send to backend
-      const newMsg = {
-        id: Date.now(),
-        text: newMessage,
-        sender: user.name || 'You',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        sentByUser: true
-      };
-      
-      setMessages(prev => ({
-        ...prev,
-        [selectedThread.id]: [...(prev[selectedThread.id] || []), newMsg]
-      }));
-      
-      setNewMessage('');
-    }
-  };
-
-  const handleSelectThread = (thread) => {
-    setSelectedThread(thread);
-  };
-
   return (
-    <Box sx={{ 
+    <Box sx={{
       display: 'flex',
       flexDirection: { xs: 'column', md: 'row' },
       height: '75vh',
@@ -106,9 +154,8 @@ export default function Messages() {
       borderRadius: 2,
       overflow: 'hidden'
     }}>
-      {/* Thread List */}
-      <Paper 
-        sx={{ 
+      <Paper
+        sx={{
           width: { xs: '100%', md: 320 },
           backgroundColor: 'background.paper',
           border: '1px solid',
@@ -119,116 +166,95 @@ export default function Messages() {
         }}
       >
         <Box sx={{ padding: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              fontWeight: 700, 
-              color: 'text.primary',
-              fontSize: '1.2rem'
-            }}
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, color: 'text.primary', fontSize: '1.2rem' }}
           >
             Messages
           </Typography>
         </Box>
-        
-        <List sx={{ flex: 1, overflowY: 'auto' }}>
-          {threads.map((t) => (
-            <ListItem 
-              key={t.id} 
-              disablePadding
-              onClick={() => handleSelectThread(t)}
-              sx={{
-                backgroundColor: selectedThread?.id === t.id ? 'action.selected' : 'transparent',
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: 'action.hover'
-                },
-                paddingY: 1
-              }}
-            >
-              <ListItemButton 
-                sx={{ 
-                  paddingX: 1,
-                  borderRadius: 1
-                }}
-              >
-                <Avatar 
-                  sx={{ 
-                    width: 50, 
-                    height: 50, 
-                    marginRight: 2,
-                    bgcolor: 'primary.main'
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : conversations.length === 0 ? (
+          <Box sx={{ padding: 3, textAlign: 'center' }}>
+            <Typography color="text.secondary">No conversations yet</Typography>
+          </Box>
+        ) : (
+          <List sx={{ flex: 1, overflowY: 'auto' }}>
+            {conversations.map((convo) => {
+              const other = getOtherParticipant(convo);
+              const hasUnread = convo.lastMessageAt &&
+                messages.some(m => !m.readBy?.includes(user._id) && m.sender._id !== user._id);
+              return (
+                <ListItem
+                  key={convo._id}
+                  disablePadding
+                  onClick={() => setSelectedConvo(convo)}
+                  sx={{
+                    backgroundColor: selectedConvo?._id === convo._id ? 'action.selected' : 'transparent',
+                    cursor: 'pointer',
+                    '&:hover': { backgroundColor: 'action.hover' },
+                    paddingY: 1
                   }}
                 >
-                  {t.with.charAt(0)}
-                </Avatar>
-                <ListItemText 
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography
-                        variant="subtitle1"
-                        component="span"
-                        sx={{
-                          fontWeight: t.unread ? 'bold' : 'medium',
-                          color: 'text.primary',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {t.with}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        component="span"
-                        sx={{
-                          color: 'text.secondary',
-                          whiteSpace: 'nowrap',
-                          marginLeft: 1
-                        }}
-                      >
-                        {t.time}
-                      </Typography>
-                    </Box>
-                  }
-                  secondary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{
-                          color: t.unread ? 'text.primary' : 'text.secondary',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {t.last}
-                      </Typography>
-                      {t.unread && (
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            backgroundColor: 'primary.main',
-                            marginLeft: 1
-                          }}
-                        />
-                      )}
-                    </Box>
-                  }
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+                  <ListItemButton sx={{ paddingX: 1, borderRadius: 1 }}>
+                    <Avatar
+                      src={other.profilePic}
+                      sx={{ width: 50, height: 50, marginRight: 2, bgcolor: 'primary.main' }}
+                    >
+                      {other.actualName?.charAt(0) || other.name?.charAt(0)}
+                    </Avatar>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: hasUnread ? 'bold' : 'medium',
+                              color: 'text.primary',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {other.actualName || other.name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', marginLeft: 1 }}>
+                            {convo.lastMessageAt ? formatTime(convo.lastMessageAt) : ''}
+                          </Typography>
+                        </Box>
+                      }
+                      secondary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: hasUnread ? 'text.primary' : 'text.secondary',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {convo.product?.name && <span style={{ fontStyle: 'italic' }}>Re: {convo.product.name} - </span>}
+                            {convo.lastMessage || 'No messages yet'}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
+        )}
       </Paper>
 
-      {/* Chat Area */}
-      {selectedThread ? (
-        <Paper 
-          sx={{ 
+      {selectedConvo ? (
+        <Paper
+          sx={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
@@ -237,54 +263,48 @@ export default function Messages() {
             borderRadius: 0
           }}
         >
-          {/* Chat Header */}
-          <Box 
-            sx={{ 
-              padding: 2, 
-              borderBottom: '1px solid', 
+          <Box
+            sx={{
+              padding: 2,
+              borderBottom: '1px solid',
               borderColor: 'divider',
               display: 'flex',
               alignItems: 'center'
             }}
           >
-            <Avatar 
-              sx={{ 
-                width: 40, 
-                height: 40, 
-                marginRight: 2,
-                bgcolor: 'primary.main'
-              }}
+            <Avatar
+              src={getOtherParticipant(selectedConvo).profilePic}
+              sx={{ width: 40, height: 40, marginRight: 2, bgcolor: 'primary.main' }}
             >
-              {selectedThread.with.charAt(0)}
+              {getOtherParticipant(selectedConvo).actualName?.charAt(0)}
             </Avatar>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                fontWeight: 600, 
-                color: 'text.primary',
-                flexGrow: 1
-              }}
-            >
-              {selectedThread.with}
-            </Typography>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                {getOtherParticipant(selectedConvo).actualName || getOtherParticipant(selectedConvo).name}
+              </Typography>
+              {selectedConvo.product && (
+                <Typography variant="caption" color="text.secondary">
+                  About: {selectedConvo.product.name} - ${selectedConvo.product.price}
+                </Typography>
+              )}
+            </Box>
           </Box>
 
-          {/* Messages */}
-          <Box 
-            sx={{ 
-              flex: 1, 
-              padding: 2, 
+          <Box
+            sx={{
+              flex: 1,
+              padding: 2,
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column'
             }}
           >
-            {(messages[selectedThread.id] || []).map((msg) => (
+            {messages.map((msg) => (
               <Box
-                key={msg.id}
+                key={msg._id}
                 sx={{
                   display: 'flex',
-                  justifyContent: msg.sentByUser ? 'flex-end' : 'flex-start',
+                  justifyContent: msg.sender._id === user._id ? 'flex-end' : 'flex-start',
                   marginBottom: 2
                 }}
               >
@@ -293,36 +313,31 @@ export default function Messages() {
                     maxWidth: '75%',
                     padding: 1.5,
                     borderRadius: 2,
-                    backgroundColor: msg.sentByUser ? 'primary.main' : 'background.paper',
-                    color: msg.sentByUser ? 'primary.contrastText' : 'text.primary',
-                    border: msg.sentByUser ? 'none' : `1px solid`,
-                    borderColor: msg.sentByUser ? 'transparent' : 'divider',
+                    backgroundColor: msg.sender._id === user._id ? 'primary.main' : 'background.paper',
+                    color: msg.sender._id === user._id ? 'primary.contrastText' : 'text.primary',
+                    border: msg.sender._id === user._id ? 'none' : '1px solid',
+                    borderColor: msg.sender._id === user._id ? 'transparent' : 'divider',
                   }}
                 >
                   <Typography variant="body1" sx={{ wordWrap: 'break-word' }}>
-                    {msg.text}
+                    {msg.body}
                   </Typography>
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      display: 'block', 
-                      textAlign: 'right', 
-                      marginTop: 0.5,
-                      opacity: 0.7 
-                    }}
+                  <Typography
+                    variant="caption"
+                    sx={{ display: 'block', textAlign: 'right', marginTop: 0.5, opacity: 0.7 }}
                   >
-                    {msg.time}
+                    {formatTime(msg.createdAt)}
                   </Typography>
                 </Box>
               </Box>
             ))}
+            <div ref={messagesEndRef} />
           </Box>
 
-          {/* Message Input */}
-          <Box 
-            sx={{ 
-              padding: 2, 
-              borderTop: '1px solid', 
+          <Box
+            sx={{
+              padding: 2,
+              borderTop: '1px solid',
               borderColor: 'divider',
               display: 'flex',
               alignItems: 'center'
@@ -334,29 +349,28 @@ export default function Messages() {
               placeholder="Type a message..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              disabled={sending}
               InputProps={{
                 sx: {
                   backgroundColor: 'action.input',
                   borderRadius: 50,
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'divider',
-                  },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
                 },
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton 
+                    <IconButton
                       onClick={handleSendMessage}
-                      sx={{ 
+                      disabled={sending || !newMessage.trim()}
+                      sx={{
                         borderRadius: '50%',
                         backgroundColor: 'primary.main',
                         color: 'primary.contrastText',
-                        '&:hover': {
-                          backgroundColor: 'primary.dark'
-                        }
+                        '&:hover': { backgroundColor: 'primary.dark' },
+                        '&:disabled': { backgroundColor: 'action.disabledBackground' }
                       }}
                     >
-                      <SendIcon />
+                      {sending ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -365,8 +379,8 @@ export default function Messages() {
           </Box>
         </Paper>
       ) : (
-        <Paper 
-          sx={{ 
+        <Paper
+          sx={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
@@ -389,5 +403,3 @@ export default function Messages() {
     </Box>
   );
 }
-
-

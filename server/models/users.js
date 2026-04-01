@@ -10,7 +10,7 @@ var UserSchema = new Schema(
         actualName: {type: String, required: true, trim:true},
         password: {type: String, required: true},
         email: {type: String, required: true, unique: true, trim:true, lowercase: true},
-        university: {type: String, required: true, trim:true},
+        university: {type: String, trim:true, default: 'Stony Brook University'},
         campus: {type: String, trim:true},
         phone: {type: String, trim:true},
         karma: {type: Number, default: 100},

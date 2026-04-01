@@ -1,13 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box, Card, CardContent, TextField, Button, Typography, Divider,
-  FormControl, InputLabel, Select, MenuItem, FormControlLabel,
-  Switch, Grid, Chip
+  FormControl, InputLabel, Select, MenuItem, Chip, CircularProgress,
+  IconButton, ImageList, ImageListItem
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useAuth } from '../context/AuthContext';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export default function SellForm() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const fileInputRef = useRef(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [images, setImages] = useState([]);
   const [form, setForm] = useState({
     name: '',
     price: '',
@@ -16,8 +29,24 @@ export default function SellForm() {
     condition: 'good',
     negotiable: true,
     allowsMeetup: true,
-    allowsShipping: false
+    allowsShipping: false,
+    campus: '',
+    area: ''
   });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/categories`);
+      const data = await res.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   function onChange(e) {
     const { name, value, type, checked } = e.target;
@@ -27,63 +56,89 @@ export default function SellForm() {
     });
   }
 
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    files.forEach(file => formData.append('images', file));
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      setImages(prev => [...prev, ...data.urls]);
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      alert('Error uploading images');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   async function onSubmit(e) {
     e.preventDefault();
 
-    // In a real app, this would submit to your API
-    // For now, we'll just show an alert with the form data
-    console.log('Submitting form:', form);
+    if (!user) {
+      router.push('/login');
+      return;
+    }
 
-    // Mock API call
+    setLoading(true);
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...form,
+      const productData = {
+        product: {
+          name: form.name,
+          description: form.description,
           price: parseFloat(form.price),
-          images: [] // In real app, this would include uploaded images
-        })
+          category: form.category || null,
+          condition: form.condition,
+          negotiable: form.negotiable,
+          allowsMeetup: form.allowsMeetup,
+          allowsShipping: form.allowsShipping,
+          images: images,
+          seller: user._id,
+          location: {
+            campus: form.campus,
+            area: form.area
+          }
+        }
+      };
+
+      const response = await fetch(`${BACKEND_URL}/newProduct`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
       });
 
       if (response.ok) {
-        alert('Item listed successfully!');
-        // Reset form
-        setForm({
-          name: '',
-          price: '',
-          description: '',
-          category: '',
-          condition: 'good',
-          negotiable: true,
-          allowsMeetup: true,
-          allowsShipping: false
-        });
+        const newProduct = await response.json();
+        router.push(`/listing/${newProduct._id}`);
       } else {
         alert('Error listing item. Please try again.');
       }
     } catch (error) {
       console.error('Error:', error);
       alert('Error listing item. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }
 
-  // Sample categories - in a real app, these would come from an API
-  const categories = [
-    { id: 'cat1', name: 'Electronics' },
-    { id: 'cat2', name: 'Books' },
-    { id: 'cat3', name: 'Furniture' },
-    { id: 'cat4', name: 'Clothing' },
-    { id: 'cat5', name: 'Appliances' },
-    { id: 'cat6', name: 'Sports & Outdoors' },
-    { id: 'cat7', name: 'Home & Garden' },
-    { id: 'cat8', name: 'Art & Crafts' },
-    { id: 'cat9', name: 'Musical Instruments' },
-    { id: 'cat10', name: 'Vehicles' },
-    { id: 'cat11', name: 'Other' }
-  ];
+  if (!user) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Typography>Please log in to list items.</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -111,12 +166,7 @@ export default function SellForm() {
         <CardContent sx={{ padding: 4 }}>
           <Typography
             variant="h4"
-            sx={{
-              fontWeight: 800,
-              color: 'text.primary',
-              marginBottom: 3,
-              textAlign: 'center'
-            }}
+            sx={{ fontWeight: 800, color: 'text.primary', marginBottom: 3, textAlign: 'center' }}
           >
             List New Item
           </Typography>
@@ -125,6 +175,65 @@ export default function SellForm() {
 
           <form onSubmit={onSubmit}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box
+                sx={{
+                  border: '2px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  p: 3,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  '&:hover': { borderColor: 'primary.main' }
+                }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                />
+                {uploading ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  <>
+                    <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                    <Typography color="text.secondary">
+                      Click to upload images (max 10)
+                    </Typography>
+                  </>
+                )}
+              </Box>
+
+              {images.length > 0 && (
+                <ImageList cols={4} rowHeight={100} gap={8}>
+                  {images.map((img, index) => (
+                    <ImageListItem key={index} sx={{ position: 'relative' }}>
+                      <img
+                        src={img.startsWith('/') ? `${BACKEND_URL}${img}` : img}
+                        alt={`Upload ${index + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => removeImage(index)}
+                        sx={{
+                          position: 'absolute',
+                          top: 2,
+                          right: 2,
+                          bgcolor: 'background.paper',
+                          '&:hover': { bgcolor: 'error.main', color: 'white' }
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ImageListItem>
+                  ))}
+                </ImageList>
+              )}
+
               <TextField
                 name="name"
                 label="Item Title"
@@ -134,31 +243,6 @@ export default function SellForm() {
                 fullWidth
                 required
                 placeholder="Enter item name"
-                InputLabelProps={{
-                  sx: {
-                    color: 'text.secondary',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    },
-                  },
-                }}
-                InputProps={{
-                  sx: {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'primary.main',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-                sx={{
-                  backgroundColor: 'action.input',
-                  borderRadius: 2,
-                }}
               />
 
               <TextField
@@ -171,31 +255,7 @@ export default function SellForm() {
                 fullWidth
                 required
                 placeholder="0.00"
-                InputLabelProps={{
-                  sx: {
-                    color: 'text.secondary',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    },
-                  },
-                }}
-                InputProps={{
-                  sx: {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'primary.main',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-                sx={{
-                  backgroundColor: 'action.input',
-                  borderRadius: 2,
-                }}
+                inputProps={{ min: 0, step: 0.01 }}
               />
 
               <TextField
@@ -209,35 +269,10 @@ export default function SellForm() {
                 fullWidth
                 required
                 placeholder="Describe the item, its features, any flaws, why you're selling, etc."
-                InputLabelProps={{
-                  sx: {
-                    color: 'text.secondary',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    },
-                  },
-                }}
-                InputProps={{
-                  sx: {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'primary.main',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-                sx={{
-                  backgroundColor: 'action.input',
-                  borderRadius: 2,
-                }}
               />
 
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-                <FormControl fullWidth variant="outlined" required>
+                <FormControl fullWidth variant="outlined">
                   <InputLabel id="category-label">Category</InputLabel>
                   <Select
                     labelId="category-label"
@@ -245,23 +280,11 @@ export default function SellForm() {
                     value={form.category}
                     onChange={onChange}
                     label="Category"
-                    sx={{
-                      backgroundColor: 'action.input',
-                      borderRadius: 2,
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'divider',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    }}
                   >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
+                    <MenuItem value="">Select category</MenuItem>
+                    {categories.map((cat) => (
+                      <MenuItem key={cat._id} value={cat._id}>
+                        {cat.name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -275,19 +298,6 @@ export default function SellForm() {
                     value={form.condition}
                     onChange={onChange}
                     label="Condition"
-                    sx={{
-                      backgroundColor: 'action.input',
-                      borderRadius: 2,
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'divider',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    }}
                   >
                     <MenuItem value="new">New</MenuItem>
                     <MenuItem value="like_new">Like New</MenuItem>
@@ -298,6 +308,27 @@ export default function SellForm() {
                 </FormControl>
               </Box>
 
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                <TextField
+                  name="campus"
+                  label="Campus"
+                  value={form.campus}
+                  onChange={onChange}
+                  variant="outlined"
+                  fullWidth
+                  placeholder="e.g., Main Campus"
+                />
+                <TextField
+                  name="area"
+                  label="Area/Building"
+                  value={form.area}
+                  onChange={onChange}
+                  variant="outlined"
+                  fullWidth
+                  placeholder="e.g., Student Union"
+                />
+              </Box>
+
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                 <Chip
                   label="Price Negotiable"
@@ -305,10 +336,6 @@ export default function SellForm() {
                   variant={form.negotiable ? "filled" : "outlined"}
                   onClick={() => setForm({...form, negotiable: !form.negotiable})}
                   clickable
-                  sx={{
-                    height: '32px',
-                    fontSize: '0.875rem'
-                  }}
                 />
                 <Chip
                   label="Meetup Available"
@@ -316,10 +343,6 @@ export default function SellForm() {
                   variant={form.allowsMeetup ? "filled" : "outlined"}
                   onClick={() => setForm({...form, allowsMeetup: !form.allowsMeetup})}
                   clickable
-                  sx={{
-                    height: '32px',
-                    fontSize: '0.875rem'
-                  }}
                 />
                 <Chip
                   label="Shipping Available"
@@ -327,16 +350,13 @@ export default function SellForm() {
                   variant={form.allowsShipping ? "filled" : "outlined"}
                   onClick={() => setForm({...form, allowsShipping: !form.allowsShipping})}
                   clickable
-                  sx={{
-                    height: '32px',
-                    fontSize: '0.875rem'
-                  }}
                 />
               </Box>
 
               <Button
                 type="submit"
                 variant="contained"
+                disabled={loading}
                 sx={{
                   marginTop: 2,
                   backgroundColor: 'primary.main',
@@ -346,12 +366,10 @@ export default function SellForm() {
                   fontSize: '1.1rem',
                   padding: 1.5,
                   borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
+                  '&:hover': { backgroundColor: 'primary.dark' },
                 }}
               >
-                List Item
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'List Item'}
               </Button>
             </Box>
           </form>
@@ -360,5 +378,3 @@ export default function SellForm() {
     </Box>
   );
 }
-
-

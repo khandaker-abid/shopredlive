@@ -2,25 +2,32 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Card, CardContent, Typography, TextField, Button, Link, Divider, Container } from '@mui/material';
+import { Box, Card, CardContent, Typography, TextField, Button, Link, Divider, Container, Alert, Chip } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
 export default function SignupPage() {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
+
+  const isSbuEmail = email.toLowerCase().endsWith('@stonybrook.edu') ||
+                     email.toLowerCase().endsWith('.stonybrook.edu');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Validation
-    if (!name || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !username || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -35,23 +42,44 @@ export default function SignupPage() {
       return;
     }
 
-    // For now, simulate a signup process
-    const userData = {
-      id: Date.now(), // Simple ID generation for demo
-      email: email,
-      name: name,
-      avatar: null
-    };
+    setLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first: firstName,
+          last: lastName,
+          username: username,
+          email: email,
+          password: password
+        })
+      });
 
-    login(userData);
-    router.push('/'); // Redirect to home after signup
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Registration failed');
+        return;
+      }
+
+      const userRes = await fetch(`${BACKEND_URL}/user/${data.userId}`);
+      const userData = await userRes.json();
+
+      login(userData);
+      router.push('/');
+    } catch (err) {
+      setError('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <ProtectedRoute requireAuth={false}>
-      <Box 
-        sx={{ 
-          minHeight: '100vh', 
+      <Box
+        sx={{
+          minHeight: '100vh',
           backgroundColor: 'background.default',
           display: 'flex',
           alignItems: 'center',
@@ -60,10 +88,10 @@ export default function SignupPage() {
         }}
       >
         <Container maxWidth="sm">
-          <Card 
-            sx={{ 
-              maxWidth: 350, 
-              margin: 'auto', 
+          <Card
+            sx={{
+              maxWidth: 400,
+              margin: 'auto',
               backgroundColor: 'background.paper',
               borderRadius: 2,
               boxShadow: 3
@@ -71,13 +99,9 @@ export default function SignupPage() {
           >
             <CardContent sx={{ padding: 4 }}>
               <Box sx={{ textAlign: 'center', marginBottom: 3 }}>
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
-                    fontWeight: 800, 
-                    color: 'text.primary',
-                    marginBottom: 1
-                  }}
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 800, color: 'text.primary', marginBottom: 1 }}
                 >
                   ShopRedLive
                 </Typography>
@@ -87,43 +111,40 @@ export default function SignupPage() {
               </Box>
 
               {error && (
-                <Typography color="error" variant="body2" align="center" sx={{ marginBottom: 2 }}>
+                <Alert severity="error" sx={{ marginBottom: 2 }}>
                   {error}
-                </Typography>
+                </Alert>
               )}
 
               <form onSubmit={handleSubmit}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    variant="outlined"
+                    margin="normal"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    variant="outlined"
+                    margin="normal"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </Box>
+
                 <TextField
                   fullWidth
-                  label="Full Name"
-                  type="text"
+                  label="Username"
                   variant="outlined"
                   margin="normal"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  InputLabelProps={{
-                    sx: {
-                      color: 'text.secondary',
-                      '&.Mui-focused': {
-                        color: 'primary.main',
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    sx: {
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'divider',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    },
-                  }}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Email"
@@ -132,29 +153,15 @@ export default function SignupPage() {
                   margin="normal"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  InputLabelProps={{
-                    sx: {
-                      color: 'text.secondary',
-                      '&.Mui-focused': {
-                        color: 'primary.main',
-                      },
-                    },
-                  }}
-                  InputProps={{
-                    sx: {
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'divider',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    },
-                  }}
+                  helperText={
+                    email && (
+                      isSbuEmail
+                        ? <Chip label="SBU Email - Verified Status" size="small" color="success" sx={{ mt: 0.5 }} />
+                        : "Use @stonybrook.edu for verified student status"
+                    )
+                  }
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Password"
@@ -163,114 +170,73 @@ export default function SignupPage() {
                   margin="normal"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  InputLabelProps={{
-                    sx: {
-                      color: 'text.secondary',
-                  '&.Mui-focused': {
-                    color: 'primary.main',
-                  },
-                },
-              }}
-              InputProps={{
-                sx: {
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'divider',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                },
-              }}
-            />
-            
-            <TextField
-              fullWidth
-              label="Confirm Password"
-              type="password"
-              variant="outlined"
-              margin="normal"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              InputLabelProps={{
-                sx: {
-                  color: 'text.secondary',
-                  '&.Mui-focused': {
-                    color: 'primary.main',
-                  },
-                },
-              }}
-              InputProps={{
-                sx: {
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'divider',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                },
-              }}
-            />
-            
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{
-                marginTop: 2,
-                marginBottom: 2,
-                backgroundColor: 'primary.main',
-                color: 'primary.contrastText',
-                fontWeight: 'bold',
-                textTransform: 'none',
-                fontSize: '16px',
-                padding: 1.2,
-                borderRadius: 2,
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                },
-              }}
-            >
-              Sign Up
-            </Button>
-          </form>
+                />
 
-          <Box sx={{ textAlign: 'center', my: 2 }}>
-            <Divider sx={{ marginY: 1 }}>
-              <Typography variant="caption" color="text.secondary">
-                OR
-              </Typography>
-            </Divider>
-          </Box>
+                <TextField
+                  fullWidth
+                  label="Confirm Password"
+                  type="password"
+                  variant="outlined"
+                  margin="normal"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
 
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => router.push('/login')}
-            sx={{
-              marginBottom: 2,
-              borderColor: 'primary.main',
-              color: 'primary.main',
-              fontWeight: 'bold',
-              textTransform: 'none',
-              fontSize: '16px',
-              padding: 1.2,
-              borderRadius: 2,
-              '&:hover': {
-                borderColor: 'primary.dark',
-                backgroundColor: 'rgba(139, 0, 0, 0.04)',
-              },
-            }}
-          >
-            Already have an account? Log In
-          </Button>
-        </CardContent>
-      </Card>
-    </Container>
-  </Box>
-</ProtectedRoute>
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  disabled={loading}
+                  sx={{
+                    marginTop: 2,
+                    marginBottom: 2,
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                    fontWeight: 'bold',
+                    textTransform: 'none',
+                    fontSize: '16px',
+                    padding: 1.2,
+                    borderRadius: 2,
+                    '&:hover': { backgroundColor: 'primary.dark' },
+                  }}
+                >
+                  {loading ? 'Creating Account...' : 'Sign Up'}
+                </Button>
+              </form>
+
+              <Box sx={{ textAlign: 'center', my: 2 }}>
+                <Divider sx={{ marginY: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    OR
+                  </Typography>
+                </Divider>
+              </Box>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => router.push('/login')}
+                sx={{
+                  marginBottom: 2,
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  fontSize: '16px',
+                  padding: 1.2,
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    backgroundColor: 'rgba(139, 0, 0, 0.04)',
+                  },
+                }}
+              >
+                Already have an account? Log In
+              </Button>
+            </CardContent>
+          </Card>
+        </Container>
+      </Box>
+    </ProtectedRoute>
+  );
+}
