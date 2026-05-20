@@ -9,6 +9,11 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-fetch"],
       "description": "HTTP fetch for testing local API endpoints during dev sessions"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "description": "Browser automation for e2e testing — navigate pages, click, fill forms, screenshot"
     }
   }
 }
