@@ -24,8 +24,8 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import FlagIcon from '@mui/icons-material/Flag';
 import MessageIcon from '@mui/icons-material/Message';
-import VerifiedIcon from '@mui/icons-material/Verified';
 import { useAuth } from '../context/AuthContext';
+import ReputationBadges from './ReputationBadges';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -366,16 +366,14 @@ export default function ProductDetail({ id }) {
               <Typography variant="body1" fontWeight={500}>
                 {product.seller?.actualName || product.seller?.name || 'Unknown Seller'}
               </Typography>
-              {product.seller?.isVerifiedStudent && (
-                <Chip
-                  icon={<VerifiedIcon />}
-                  label="SBU Verified"
+              <Box sx={{ mt: 0.5 }}>
+                <ReputationBadges
+                  user={product.seller}
+                  avgRating={sellerStats.avgRating}
+                  reviewCount={sellerStats.reviewCount}
                   size="small"
-                  color="success"
-                  variant="outlined"
-                  sx={{ mt: 0.5 }}
                 />
-              )}
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Karma: {product.seller?.karma || 100}
               </Typography>

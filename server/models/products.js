@@ -20,6 +20,13 @@ var ProductSchema = new Schema(
             area: {type: String, trim: true}
         },
         status: {type: String, enum: ['active', 'reserved', 'sold', 'removed', 'draft', 'expired'], default: 'active'},
+        moderation: {
+            status: { type: String, enum: ['clean', 'flagged', 'removed'], default: 'clean' },
+            reason: { type: String, trim: true },
+            note: { type: String, trim: true },
+            removedAt: { type: Date },
+            removedBy: { type: Schema.Types.ObjectId, ref: 'User' }
+        },
         negotiable: {type: Boolean, default: true},
         allowsMeetup: {type: Boolean, default: true},
         allowsShipping: {type: Boolean, default: false},

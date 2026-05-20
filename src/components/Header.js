@@ -110,6 +110,11 @@ export default function Header() {
         <Button component={Link} href="/messages" color="secondary">Messages</Button>
         {user ? (
           <>
+            {user.isAdmin && (
+              <Button component={Link} href="/admin/moderation" color="secondary">
+                Admin
+              </Button>
+            )}
             <Button component={Link} href="/profile" color="secondary">
               {user.name || 'Profile'}
             </Button>

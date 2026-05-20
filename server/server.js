@@ -129,6 +129,8 @@ function buildProductSearchQuery(params) {
     if (typeof allowsMeetup === 'boolean') query.allowsMeetup = allowsMeetup;
     const allowsShipping = parseBoolean(params.allowsShipping);
     if (typeof allowsShipping === 'boolean') query.allowsShipping = allowsShipping;
+    const negotiable = parseBoolean(params.negotiable);
+    if (typeof negotiable === 'boolean') query.negotiable = negotiable;
 
     if (params.minPrice || params.maxPrice) {
         query.price = {};
@@ -301,6 +303,19 @@ app.post("/users/verify-login", async (req,res) => {
             }
             await user.save();
             return res.status(401).json({ validEmail: true, validPassword: false });
+        }
+
+        const moderation = user.moderation || {};
+        if (moderation.status === 'banned') {
+            return res.status(403).json({ error: 'Account banned' });
+        }
+        if (moderation.status === 'suspended') {
+            if (!moderation.suspendedUntil || moderation.suspendedUntil.getTime() > Date.now()) {
+                return res.status(403).json({
+                    error: 'Account suspended',
+                    suspendedUntil: moderation.suspendedUntil
+                });
+            }
         }
 
         const ip = getRequestIp(req);
@@ -783,6 +798,7 @@ app.patch("/user/:id", async (req, res) => {
         const updateData = req.body;
         delete updateData.password;
         delete updateData.isAdmin;
+        delete updateData.moderation;
         const user = await UserModel.findByIdAndUpdate(
             req.params.id,
             { $set: updateData },
@@ -825,7 +841,8 @@ app.post("/user/:id/saved-searches", async (req, res) => {
                 maxPrice: filters?.maxPrice ?? null,
                 campus: filters?.campus || '',
                 allowsMeetup: typeof filters?.allowsMeetup === 'boolean' ? filters.allowsMeetup : undefined,
-                allowsShipping: typeof filters?.allowsShipping === 'boolean' ? filters.allowsShipping : undefined
+                allowsShipping: typeof filters?.allowsShipping === 'boolean' ? filters.allowsShipping : undefined,
+                negotiable: typeof filters?.negotiable === 'boolean' ? filters.negotiable : undefined
             },
             createdAt: new Date(),
             lastCheckedAt: new Date()
@@ -874,7 +891,8 @@ app.post("/user/:id/saved-searches/:searchId/run", async (req, res) => {
             maxPrice: savedSearch.filters?.maxPrice || undefined,
             campus: savedSearch.filters?.campus || undefined,
             allowsMeetup: savedSearch.filters?.allowsMeetup,
-            allowsShipping: savedSearch.filters?.allowsShipping
+            allowsShipping: savedSearch.filters?.allowsShipping,
+            negotiable: savedSearch.filters?.negotiable
         };
 
         const query = buildProductSearchQuery(queryParams);
@@ -1403,6 +1421,36 @@ app.post("/reviews", async (req, res) => {
     }
 });
 
+app.get("/reports", async (req, res) => {
+    try {
+        const status = req.query.status;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
+        const query = {};
+
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        const [reports, total] = await Promise.all([
+            ReportModel.find(query)
+                .populate('reporter', 'name actualName email profilePic')
+                .populate('targetUser', 'name actualName email profilePic moderation')
+                .populate('targetProduct', 'name status seller')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            ReportModel.countDocuments(query)
+        ]);
+
+        res.json({ reports, total, page, pages: Math.ceil(total / limit) });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch reports' });
+    }
+});
+
 app.post("/reports", async (req, res) => {
     try {
         const { reporterId, targetUserId, targetProductId, reason, details } = req.body;
@@ -1448,6 +1496,180 @@ app.patch("/reports/:id", async (req, res) => {
 
         const report = await ReportModel.findByIdAndUpdate(req.params.id, updateOps, { new: true });
         if (!report) return res.status(404).json({ error: 'Report not found' });
+        res.json(report);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update report' });
+    }
+});
+
+app.post("/reports/:id/action", async (req, res) => {
+    try {
+        const { actorId, action, note, suspensionDays } = req.body || {};
+        if (!actorId || !action) {
+            return res.status(400).json({ error: 'actorId and action are required' });
+        }
+
+        const actor = await UserModel.findById(actorId).select('isAdmin name actualName').lean();
+        if (!actor || !actor.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const report = await ReportModel.findById(req.params.id)
+            .populate('reporter', 'name actualName email')
+            .populate('targetUser', 'name actualName email moderation')
+            .populate('targetProduct', 'name status seller')
+            .exec();
+        if (!report) return res.status(404).json({ error: 'Report not found' });
+
+        const now = new Date();
+        let nextStatus = report.status || 'open';
+
+        if (action === 'reviewing') {
+            nextStatus = 'reviewing';
+        } else if (action === 'dismiss') {
+            nextStatus = 'dismissed';
+        } else if (action === 'resolve') {
+            nextStatus = 'resolved';
+        } else if (action === 'warn_user') {
+            if (!report.targetUser) return res.status(400).json({ error: 'No target user on report' });
+            nextStatus = 'resolved';
+            await UserModel.findByIdAndUpdate(
+                report.targetUser._id,
+                {
+                    $inc: { 'moderation.warnings': 1 },
+                    $set: {
+                        'moderation.status': 'warned',
+                        'moderation.reason': note || report.reason || 'Policy warning',
+                        'moderation.lastActionAt': now
+                    }
+                },
+                { new: true }
+            );
+            await NotificationModel.create({
+                recipient: report.targetUser._id,
+                type: 'system',
+                title: 'Account warning issued',
+                body: note || 'A moderator issued a warning on your account.',
+                data: { reportId: report._id, action }
+            });
+        } else if (action === 'suspend_user') {
+            if (!report.targetUser) return res.status(400).json({ error: 'No target user on report' });
+            nextStatus = 'resolved';
+            const days = Math.max(1, Number(suspensionDays) || 7);
+            const suspendedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+            await UserModel.findByIdAndUpdate(
+                report.targetUser._id,
+                {
+                    $set: {
+                        'moderation.status': 'suspended',
+                        'moderation.suspendedUntil': suspendedUntil,
+                        'moderation.reason': note || report.reason || 'Policy suspension',
+                        'moderation.lastActionAt': now
+                    }
+                },
+                { new: true }
+            );
+            await NotificationModel.create({
+                recipient: report.targetUser._id,
+                type: 'system',
+                title: 'Account suspended',
+                body: `Your account has been suspended until ${suspendedUntil.toLocaleDateString()}.`,
+                data: { reportId: report._id, action, suspendedUntil }
+            });
+        } else if (action === 'remove_listing') {
+            if (!report.targetProduct) return res.status(400).json({ error: 'No target listing on report' });
+            nextStatus = 'resolved';
+            const product = await ProductModel.findById(report.targetProduct._id).select('name seller status').lean();
+            if (!product) return res.status(404).json({ error: 'Listing not found' });
+            await ProductModel.findByIdAndUpdate(
+                report.targetProduct._id,
+                {
+                    $set: {
+                        status: 'removed',
+                        moderation: {
+                            status: 'removed',
+                            reason: report.reason || 'Policy violation',
+                            note: note || '',
+                            removedAt: now,
+                            removedBy: actorId
+                        }
+                    }
+                },
+                { new: true }
+            );
+            await NotificationModel.create({
+                recipient: product.seller,
+                type: 'system',
+                title: 'Listing removed',
+                body: note || `Your listing "${product.name}" was removed by a moderator.`,
+                data: { reportId: report._id, action, productId: product._id }
+            });
+        } else if (action === 'restore_listing') {
+            if (!report.targetProduct) return res.status(400).json({ error: 'No target listing on report' });
+            nextStatus = 'resolved';
+            const product = await ProductModel.findById(report.targetProduct._id).select('name seller status').lean();
+            if (!product) return res.status(404).json({ error: 'Listing not found' });
+            await ProductModel.findByIdAndUpdate(
+                report.targetProduct._id,
+                {
+                    $set: {
+                        status: 'active',
+                        moderation: {
+                            status: 'clean',
+                            reason: '',
+                            note: '',
+                            removedAt: null,
+                            removedBy: null
+                        }
+                    }
+                },
+                { new: true }
+            );
+            await NotificationModel.create({
+                recipient: product.seller,
+                type: 'system',
+                title: 'Listing restored',
+                body: note || `Your listing "${product.name}" has been restored.`,
+                data: { reportId: report._id, action, productId: product._id }
+            });
+        } else {
+            return res.status(400).json({ error: 'Unknown action' });
+        }
+
+        report.status = nextStatus;
+        report.actions = Array.isArray(report.actions) ? report.actions : [];
+        report.actions.push({
+            action,
+            note: note || '',
+            createdAt: now,
+            createdBy: actor.actualName || actor.name || String(actorId),
+            metadata: action === 'suspend_user' ? { suspensionDays: suspensionDays || 7 } : undefined
+        });
+
+        if (note) {
+            report.moderatorNotes = Array.isArray(report.moderatorNotes) ? report.moderatorNotes : [];
+            report.moderatorNotes.push({
+                note,
+                createdBy: actor.actualName || actor.name || String(actorId)
+            });
+        }
+
+        await report.save();
+
+        if (report.reporter?._id && action !== 'reviewing') {
+            const resolvedTitle = action === 'dismiss' ? 'Report dismissed' : 'Report resolved';
+            const resolvedBody = action === 'dismiss'
+                ? 'Thanks for looking out. We reviewed the report and found no violation.'
+                : 'Thanks for reporting. Our moderators have taken action.';
+            await NotificationModel.create({
+                recipient: report.reporter._id,
+                type: 'system',
+                title: resolvedTitle,
+                body: note || resolvedBody,
+                data: { reportId: report._id, action }
+            });
+        }
+
         res.json(report);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update report' });

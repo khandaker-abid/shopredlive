@@ -37,6 +37,7 @@ export default function Sidebar() {
   const [campus, setCampus] = useState('');
   const [allowsMeetup, setAllowsMeetup] = useState(false);
   const [allowsShipping, setAllowsShipping] = useState(false);
+  const [negotiable, setNegotiable] = useState(false);
 
   const active = searchParams.get('category') || 'all';
 
@@ -63,6 +64,7 @@ export default function Sidebar() {
     setCampus(searchParams.get('campus') || '');
     setAllowsMeetup(searchParams.get('allowsMeetup') === 'true');
     setAllowsShipping(searchParams.get('allowsShipping') === 'true');
+    setNegotiable(searchParams.get('negotiable') === 'true');
   }, [searchParams]);
 
   const buildHref = useCallback((categoryId) => {
@@ -86,8 +88,10 @@ export default function Sidebar() {
     else params.delete('allowsMeetup');
     if (allowsShipping) params.set('allowsShipping', 'true');
     else params.delete('allowsShipping');
+    if (negotiable) params.set('negotiable', 'true');
+    else params.delete('negotiable');
     return `/?${params.toString()}`;
-  }, [searchParams, priceRange, condition, sort, campus, allowsMeetup, allowsShipping]);
+  }, [searchParams, priceRange, condition, sort, campus, allowsMeetup, allowsShipping, negotiable]);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -105,8 +109,10 @@ export default function Sidebar() {
     else params.delete('allowsMeetup');
     if (allowsShipping) params.set('allowsShipping', 'true');
     else params.delete('allowsShipping');
+    if (negotiable) params.set('negotiable', 'true');
+    else params.delete('negotiable');
     router.push(`/?${params.toString()}`);
-  }, [searchParams, priceRange, condition, sort, campus, allowsMeetup, allowsShipping, router]);
+  }, [searchParams, priceRange, condition, sort, campus, allowsMeetup, allowsShipping, negotiable, router]);
 
   const allCategories = useMemo(() => [{ _id: 'all', name: 'All' }, ...categories], [categories]);
 
@@ -232,6 +238,12 @@ export default function Sidebar() {
       <FormControlLabel
         control={<Switch checked={allowsShipping} onChange={(e) => setAllowsShipping(e.target.checked)} />}
         label="Shipping Available"
+        sx={{ mb: 2 }}
+      />
+
+      <FormControlLabel
+        control={<Switch checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} />}
+        label="Negotiable"
         sx={{ mb: 2 }}
       />
 

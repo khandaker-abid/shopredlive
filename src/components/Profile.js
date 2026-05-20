@@ -37,6 +37,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import Link from 'next/link';
+import ReputationBadges from './ReputationBadges';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -79,7 +80,8 @@ export default function Profile() {
     maxPrice: '',
     campus: '',
     allowsMeetup: false,
-    allowsShipping: false
+    allowsShipping: false,
+    negotiable: false
   });
   const [profileData, setProfileData] = useState({
     actualName: '',
@@ -353,7 +355,8 @@ export default function Profile() {
             maxPrice: searchForm.maxPrice ? Number(searchForm.maxPrice) : null,
             campus: searchForm.campus || '',
             allowsMeetup: searchForm.allowsMeetup,
-            allowsShipping: searchForm.allowsShipping
+            allowsShipping: searchForm.allowsShipping,
+            negotiable: searchForm.negotiable
           }
         })
       });
@@ -369,7 +372,8 @@ export default function Profile() {
         maxPrice: '',
         campus: '',
         allowsMeetup: false,
-        allowsShipping: false
+        allowsShipping: false,
+        negotiable: false
       });
       notify('Search saved');
     } catch (err) {
@@ -516,6 +520,14 @@ export default function Profile() {
                 <Typography variant="body2" color="text.secondary">
                   ({reviews.length} reviews)
                 </Typography>
+              </Box>
+              <Box sx={{ mt: 1 }}>
+                <ReputationBadges
+                  user={userData}
+                  avgRating={avgRating}
+                  reviewCount={reviews.length}
+                  includeVerified={false}
+                />
               </Box>
               {userData?.responseTimeAvgMinutes ? (
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -968,6 +980,13 @@ export default function Profile() {
                   size="small"
                 >
                   Shipping
+                </Button>
+                <Button
+                  variant={searchForm.negotiable ? 'contained' : 'outlined'}
+                  onClick={() => setSearchForm({ ...searchForm, negotiable: !searchForm.negotiable })}
+                  size="small"
+                >
+                  Negotiable
                 </Button>
               </Box>
               <Button variant="contained" onClick={handleAddSavedSearch}>

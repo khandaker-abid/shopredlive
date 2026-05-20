@@ -15,6 +15,13 @@ var ReportSchema = new Schema(
             note: { type: String, trim: true, maxLength: 2000 },
             createdAt: { type: Date, default: Date.now },
             createdBy: { type: String, trim: true }
+        }],
+        actions: [{
+            action: { type: String, trim: true },
+            note: { type: String, trim: true, maxLength: 2000 },
+            createdAt: { type: Date, default: Date.now },
+            createdBy: { type: String, trim: true },
+            metadata: { type: Object }
         }]
     }, { timestamps: true }
 );

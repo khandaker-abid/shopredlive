@@ -16,6 +16,13 @@ var UserSchema = new Schema(
         karma: {type: Number, default: 100},
         isAdmin: {type: Boolean, default: false},
         isVerifiedStudent: {type: Boolean, default: false},
+        moderation: {
+            status: { type: String, enum: ['active', 'warned', 'suspended', 'banned'], default: 'active' },
+            warnings: { type: Number, default: 0 },
+            suspendedUntil: { type: Date },
+            reason: { type: String, trim: true },
+            lastActionAt: { type: Date }
+        },
         failedLoginAttempts: { type: Number, default: 0 },
         lockUntil: { type: Date },
         lastLoginIp: { type: String, trim: true },
@@ -70,7 +77,8 @@ var UserSchema = new Schema(
                 maxPrice: { type: Number },
                 campus: { type: String, trim: true },
                 allowsMeetup: { type: Boolean },
-                allowsShipping: { type: Boolean }
+                allowsShipping: { type: Boolean },
+                negotiable: { type: Boolean }
             },
             createdAt: { type: Date, default: Date.now },
             lastCheckedAt: { type: Date }

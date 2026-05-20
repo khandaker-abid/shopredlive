@@ -1,0 +1,7 @@
+{
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "fetch",
+    "playwright"
+  ]
+}

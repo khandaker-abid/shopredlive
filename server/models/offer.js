@@ -12,7 +12,15 @@ var OfferSchema = new Schema(
         currency: { type: String, default: 'USD' },
         status: { type: String, enum: ['pending', 'accepted', 'declined', 'withdrawn', 'expired'], default: 'pending' },
         message: { type: String, trim: true, maxLength: 2000 },
-        expiresAt: { type: Date }
+        expiresAt: { type: Date },
+        lastActor: { type: Schema.Types.ObjectId, ref: 'User' },
+        history: [{
+            actor: { type: Schema.Types.ObjectId, ref: 'User' },
+            amount: { type: Number, min: 0 },
+            message: { type: String, trim: true, maxLength: 2000 },
+            type: { type: String, enum: ['offer', 'counter'], default: 'offer' },
+            createdAt: { type: Date, default: Date.now }
+        }]
     }, { timestamps: true }
 );
 

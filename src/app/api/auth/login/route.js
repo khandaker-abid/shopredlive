@@ -72,6 +72,16 @@ export async function POST(req) {
     return NextResponse.json({ validEmail: true, validPassword: false, error: 'Invalid credentials' }, { status: 401 });
   }
 
+  const moderation = user.moderation || {};
+  if (moderation.status === 'banned') {
+    return NextResponse.json({ error: 'Account banned' }, { status: 403 });
+  }
+  if (moderation.status === 'suspended') {
+    if (!moderation.suspendedUntil || moderation.suspendedUntil.getTime() > Date.now()) {
+      return NextResponse.json({ error: 'Account suspended', suspendedUntil: moderation.suspendedUntil }, { status: 403 });
+    }
+  }
+
   const ip = getRequestIp(req);
   const deviceFingerprint = buildDeviceFingerprint(req);
   const geo = deriveGeoFromIp(ip);
