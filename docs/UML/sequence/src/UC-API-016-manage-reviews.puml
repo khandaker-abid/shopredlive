@@ -1,0 +1,65 @@
+@startuml
+title UC-API-016: Manage Reviews
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/reviews/route.js)" as reviewsApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Reviews ==
+client -> reviewsApi : GET /api/reviews
+reviewsApi -> db : Read db.reviews
+db --> reviewsApi : reviews[]
+reviewsApi --> client : 200 JSON reviews[]
+
+== POST Create Review ==
+client -> reviewsApi : POST /api/reviews
+note right of client
+    Body: {
+        reviewerId: "user-buyer-123",
+        revieweeId: "user-seller-456",
+        rating: 5,
+        comment: "Great seller, item exactly as described!"
+    }
+end note
+
+== Parse Request Body ==
+reviewsApi -> utils : readJson(req)
+utils -> utils : Parse JSON from request
+utils --> reviewsApi : { reviewerId, revieweeId, rating, comment }
+
+== Generate Review ID ==
+reviewsApi -> utils : generateId('rev')
+utils -> utils : Generate random + timestamp
+utils --> reviewsApi : "rev-{random}-{timestamp}"
+
+== Create Review Object ==
+reviewsApi -> reviewsApi : Create review object
+note right of reviewsApi
+    review = {
+        id: generated ID,
+        reviewerId: data.reviewerId,
+        revieweeId: data.revieweeId,
+        rating: data.rating,
+        comment: data.comment || '',
+        createdAt: Date.now()
+    }
+end note
+
+== Store Review ==
+reviewsApi -> db : db.reviews.push(review)
+db --> reviewsApi : Review stored
+
+== Response ==
+reviewsApi --> client : 201 Created { review }
+
+note over client, db
+    <<inferred>> Additional logic needed:
+    - Validate rating is 1-5
+    - Verify order exists and is completed
+    - Prevent duplicate reviews for same order
+    - Update reviewee's karma/reputation
+end note
+
+@enduml
+

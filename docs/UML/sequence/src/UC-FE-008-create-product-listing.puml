@@ -1,0 +1,84 @@
+@startuml
+title UC-FE-008: Create Product Listing (Sell Item)
+
+actor "Authenticated Seller" as user
+participant "SellPage\n(/sell/page.js)" as sellPage
+participant "ProtectedRoute\n(ProtectedRoute.js)" as protectedRoute
+participant "SellForm\n(SellForm.js)" as sellForm
+participant "Next.js API Route\n(/api/products)" as apiRoute
+participant "Express Server\n(server.js)" as expressServer
+database "MongoDB" as mongodb
+
+== Page Load & Authentication ==
+user -> sellPage : Navigate to /sell
+sellPage -> protectedRoute : Wrap with requireAuth=true
+protectedRoute -> protectedRoute : Check auth state
+
+alt Not authenticated
+    protectedRoute --> user : Redirect to /login
+else Authenticated
+    protectedRoute --> sellPage : Render page
+    sellPage -> sellForm : Render SellForm component
+    sellForm --> user : Display listing form
+end
+
+== Fill Form ==
+user -> sellForm : Enter item title (name)
+user -> sellForm : Enter price
+user -> sellForm : Enter description
+user -> sellForm : Select category
+user -> sellForm : Select condition
+user -> sellForm : Toggle delivery options (negotiable, meetup, shipping)
+
+== Submit Form ==
+user -> sellForm : Click "List Item" button
+sellForm -> sellForm : onSubmit(e)
+sellForm -> sellForm : e.preventDefault()
+
+sellForm -> apiRoute : fetch('/api/products', { method: 'POST', body: formData })
+note right of sellForm
+    POST body: {
+        name, price, description,
+        category, condition,
+        negotiable, allowsMeetup, allowsShipping,
+        images: []
+    }
+end note
+
+apiRoute -> apiRoute : Parse JSON body
+apiRoute -> apiRoute : Validate required fields
+
+alt Missing required fields
+    apiRoute --> sellForm : 400 Bad Request
+    sellForm --> user : "Error listing item" alert
+else Valid data
+    apiRoute -> expressServer : POST /newProduct { product: data }
+    expressServer -> expressServer : Create ProductModel instance
+    note right of expressServer
+        new ProductModel({
+            name, description, price,
+            currency: 'USD',
+            seller, buyer: null,
+            images, category, condition,
+            tags, location, status: 'active',
+            negotiable, allowsMeetup, allowsShipping,
+            views: 0
+        })
+    end note
+    expressServer -> mongodb : product.save()
+    mongodb --> expressServer : savedProduct
+    expressServer -> mongodb : UserModel.updateOne({$push: {products: savedProduct._id}})
+    mongodb --> expressServer : Update confirmed
+    expressServer --> apiRoute : JSON savedProduct
+    apiRoute --> sellForm : 201 Created
+
+    alt Success response
+        sellForm --> user : "Item listed successfully!" alert
+        sellForm -> sellForm : Reset form to initial state
+    else Error response
+        sellForm --> user : "Error listing item" alert
+    end
+end
+
+@enduml
+

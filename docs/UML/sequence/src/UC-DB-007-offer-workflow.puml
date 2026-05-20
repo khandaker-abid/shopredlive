@@ -1,0 +1,130 @@
+@startuml
+title UC-DB-007: Offer Workflow
+
+actor "Buyer" as buyer
+actor "Seller" as seller
+participant "Frontend" as frontend
+participant "Offers API\n(/api/offers)" as offersApi
+participant "Orders API\n(/api/orders)" as ordersApi
+participant "Products API" as productsApi
+participant "Notifications API" as notifApi
+database "MongoDB\n(Offer Schema)" as mongodb
+
+== Buyer Creates Offer ==
+buyer -> frontend : Click "Make Offer" on product
+buyer -> frontend : Enter offer amount ($75)
+frontend -> offersApi : POST /api/offers
+note right of frontend
+    {
+        productId: "prod-123",
+        buyerId: "user-buyer",
+        amount: 75.00
+    }
+end note
+
+offersApi -> mongodb : Create Offer document
+note right of offersApi
+    Offer Schema Fields:
+    - product: ObjectId (ref: Product)
+    - buyer: ObjectId (ref: User)
+    - seller: ObjectId (ref: User)
+    - amount: Number (min: 0)
+    - currency: 'USD'
+    - status: 'pending'
+    - message: String (optional)
+    - expiresAt: Date (optional)
+    - timestamps: true
+end note
+
+mongodb --> offersApi : Offer created
+offersApi --> frontend : 201 { offer }
+
+frontend -> notifApi : POST /api/notifications
+note right of frontend
+    Notify seller:
+    "New $75 offer on your iPhone"
+end note
+
+notifApi --> seller : Notification received
+
+== Seller Reviews Offer ==
+seller -> frontend : View offer details
+
+alt Accept Offer
+    seller -> frontend : Click "Accept"
+    frontend -> offersApi : PATCH /api/offers/{id}
+    note right of frontend
+        { status: 'accepted' }
+    end note
+    
+    offersApi -> mongodb : Update status
+    mongodb --> offersApi : Updated
+    
+    == Create Order ==
+    frontend -> ordersApi : POST /api/orders
+    note right of frontend
+        {
+            productId, buyerId, sellerId,
+            price: offer.amount
+        }
+    end note
+    
+    frontend -> productsApi : PATCH product status
+    note right of frontend
+        { status: 'reserved' }
+    end note
+    
+    frontend -> notifApi : Notify buyer
+    note right of frontend
+        "Your offer was accepted!"
+    end note
+    
+else Decline Offer
+    seller -> frontend : Click "Decline"
+    frontend -> offersApi : PATCH /api/offers/{id}
+    note right of frontend
+        { status: 'declined' }
+    end note
+    
+    offersApi -> mongodb : Update status
+    
+    frontend -> notifApi : Notify buyer
+    note right of frontend
+        "Your offer was declined"
+    end note
+    
+else Counter Offer <<inferred>>
+    seller -> frontend : Enter counter amount
+    frontend -> offersApi : POST /api/offers
+    note right of frontend
+        New offer from seller to buyer
+        with counter amount
+    end note
+end
+
+== Buyer Withdraws Offer ==
+alt Offer still pending
+    buyer -> frontend : Click "Withdraw Offer"
+    frontend -> offersApi : PATCH /api/offers/{id}
+    note right of frontend
+        { status: 'withdrawn' }
+    end note
+    
+    offersApi -> mongodb : Update status
+    mongodb --> offersApi : Updated
+    
+    frontend -> notifApi : Notify seller
+    note right of frontend
+        "Offer was withdrawn"
+    end note
+end
+
+== Offer Expires <<inferred>> ==
+note over mongodb
+    If offer.expiresAt < now
+    and status === 'pending':
+    Auto-update to 'expired'
+end note
+
+@enduml
+

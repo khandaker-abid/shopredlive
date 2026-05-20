@@ -1,0 +1,74 @@
+@startuml
+title UC-FE-001: User Login
+
+actor "User" as user
+participant "LoginPage\n(page.js)" as loginPage
+participant "ProtectedRoute\n(ProtectedRoute.js)" as protectedRoute
+participant "AuthContext\n(AuthContext.js)" as authContext
+participant "localStorage" as localStorage
+participant "Next.js Router" as router
+
+== Page Load ==
+user -> loginPage : Navigate to /login
+loginPage -> protectedRoute : Wrap with requireAuth=false
+protectedRoute -> authContext : Check user state
+authContext -> localStorage : getItem('user')
+alt User already logged in
+    localStorage --> authContext : userData (JSON)
+    authContext --> protectedRoute : user exists
+    protectedRoute -> router : push('/')
+    router --> user : Redirect to home
+else User not logged in
+    localStorage --> authContext : null
+    authContext --> protectedRoute : user is null
+    protectedRoute --> loginPage : Render login form
+    loginPage --> user : Display login form
+end
+
+== Login Flow ==
+user -> loginPage : Enter email and password
+user -> loginPage : Click "Sign In"
+loginPage -> loginPage : handleSubmit(e)
+loginPage -> loginPage : setError('')
+
+alt Empty fields
+    loginPage --> user : "Please fill in all fields"
+else Valid input
+    loginPage -> loginPage : Create userData object
+    note right of loginPage
+        userData = {
+            id: 1,
+            email: email,
+            name: email.split('@')[0],
+            avatar: null
+        }
+    end note
+    loginPage -> authContext : login(userData)
+    authContext -> authContext : setUser(userData)
+    authContext -> localStorage : setItem('user', JSON.stringify(userData))
+    authContext --> loginPage : Login complete
+    loginPage -> router : push('/')
+    router --> user : Redirect to home page
+end
+
+== Demo Login Flow ==
+user -> loginPage : Click "Continue as Demo User"
+loginPage -> loginPage : handleDemoLogin()
+loginPage -> loginPage : Create demoUser object
+note right of loginPage
+    demoUser = {
+        id: 1,
+        email: 'demo@example.com',
+        name: 'Demo User',
+        avatar: null
+    }
+end note
+loginPage -> authContext : login(demoUser)
+authContext -> authContext : setUser(demoUser)
+authContext -> localStorage : setItem('user', JSON.stringify(demoUser))
+authContext --> loginPage : Login complete
+loginPage -> router : push('/')
+router --> user : Redirect to home page
+
+@enduml
+

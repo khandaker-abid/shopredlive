@@ -1,0 +1,55 @@
+@startuml
+title UC-API-010: Create User (API Route)
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/users/route.js)" as nextApi
+participant "_utils.js\n(generateId, readJson)" as utils
+participant "In-Memory DB\n(db)" as db
+
+== Request Flow ==
+client -> nextApi : POST /api/users
+note right of client
+    Body: {
+        name: "John Doe",
+        email: "john@example.com",
+        university: "State University"
+    }
+end note
+
+== Parse Request Body ==
+nextApi -> utils : readJson(req)
+
+alt JSON Parse Success
+    utils -> utils : req.json()
+    utils --> nextApi : parsed body object
+else JSON Parse Error
+    utils --> nextApi : {} (empty object)
+end
+
+== Generate User ID ==
+nextApi -> utils : generateId('user')
+utils -> utils : Generate random string (6 chars, base36)
+utils -> utils : Get timestamp suffix (4 chars, base36)
+utils --> nextApi : "user-{random}-{timestamp}"
+
+== Create User Object ==
+nextApi -> nextApi : Create user object
+note right of nextApi
+    user = {
+        id: generated ID,
+        name: data.name || 'User',
+        email: data.email || '',
+        university: data.university || '',
+        createdAt: Date.now()
+    }
+end note
+
+== Store in Memory ==
+nextApi -> db : db.users.push(user)
+db --> nextApi : User added
+
+== Response ==
+nextApi --> client : 201 Created { user }
+
+@enduml
+

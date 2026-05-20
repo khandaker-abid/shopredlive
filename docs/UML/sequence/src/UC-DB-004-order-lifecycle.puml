@@ -1,0 +1,121 @@
+@startuml
+title UC-DB-004: Order Lifecycle
+
+actor "Buyer" as buyer
+actor "Seller" as seller
+participant "Frontend" as frontend
+participant "Orders API\n(/api/orders)" as ordersApi
+participant "Products API\n(/api/products)" as productsApi
+participant "Notifications API" as notifApi
+database "MongoDB\n(Order Schema)" as mongodb
+
+== Order Creation (After Offer Accepted) ==
+seller -> frontend : Accept offer
+frontend -> ordersApi : POST /api/orders
+note right of frontend
+    {
+        productId, buyerId, sellerId,
+        price: acceptedOfferAmount,
+        meetup: {
+            time: null,
+            campus: "",
+            locationDetail: ""
+        }
+    }
+end note
+
+ordersApi -> mongodb : Create Order document
+note right of ordersApi
+    Order Schema Fields:
+    - product: ObjectId (ref: Product)
+    - buyer: ObjectId (ref: User)
+    - seller: ObjectId (ref: User)
+    - status: 'pending_meetup'
+    - price: Number
+    - currency: 'USD'
+    - meetup: { time, campus, locationDetail, notes }
+    - timestamps: true
+end note
+
+mongodb --> ordersApi : Order created
+ordersApi --> frontend : 201 { order }
+
+frontend -> productsApi : PATCH /api/products/{id}
+note right of frontend
+    { status: 'reserved' }
+end note
+productsApi -> mongodb : Update product status
+
+frontend -> notifApi : POST /api/notifications
+note right of frontend
+    Notify buyer: "Offer accepted!"
+end note
+
+== Arrange Meetup ==
+buyer -> frontend : Propose meetup details
+frontend -> ordersApi : PATCH /api/orders/{id}
+note right of frontend
+    {
+        meetup: {
+            time: "2025-12-20T14:00:00",
+            campus: "Main Campus",
+            locationDetail: "Library entrance",
+            notes: "I'll wear a blue jacket"
+        }
+    }
+end note
+
+ordersApi -> mongodb : Update meetup details
+mongodb --> ordersApi : Updated
+ordersApi --> frontend : 200 { order }
+
+frontend -> notifApi : POST /api/notifications
+note right of frontend
+    Notify seller: "Meetup proposed"
+end note
+
+seller -> frontend : Confirm meetup
+frontend -> notifApi : POST /api/notifications
+note right of frontend
+    Notify buyer: "Meetup confirmed"
+end note
+
+== Complete Transaction ==
+buyer -> frontend : Confirm item received
+seller -> frontend : Confirm payment received
+
+frontend -> ordersApi : PATCH /api/orders/{id}
+note right of frontend
+    { status: 'completed' }
+end note
+
+ordersApi -> mongodb : Update status to 'completed'
+mongodb --> ordersApi : Updated
+
+frontend -> productsApi : PATCH /api/products/{id}
+note right of frontend
+    { status: 'sold', buyer: buyerId }
+end note
+
+frontend --> buyer : Enable review submission
+frontend --> seller : Enable review submission
+
+== Alternate: Cancel Order ==
+alt Buyer or Seller cancels
+    frontend -> ordersApi : PATCH /api/orders/{id}
+    note right of frontend
+        { status: 'cancelled' }
+    end note
+    
+    ordersApi -> mongodb : Update status
+    
+    frontend -> productsApi : PATCH /api/products/{id}
+    note right of frontend
+        { status: 'active' }
+    end note
+    
+    frontend -> notifApi : Notify other party
+end
+
+@enduml
+

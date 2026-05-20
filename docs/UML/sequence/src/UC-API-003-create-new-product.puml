@@ -1,0 +1,69 @@
+@startuml
+title UC-API-003: Create New Product
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/products/route.js)" as nextApi
+participant "Express Server\n(server.js)" as express
+control "ProductModel\n(products.js)" as productModel
+control "UserModel\n(users.js)" as userModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> nextApi : POST /api/products
+note right of client
+    Body: {
+        name, description, price,
+        category, condition,
+        negotiable, allowsMeetup,
+        allowsShipping, seller, ...
+    }
+end note
+
+nextApi -> nextApi : Parse JSON body
+nextApi -> nextApi : Validate required fields
+
+alt Missing required fields
+    nextApi --> client : 400 { error: 'Name, description, and price are required' }
+else Valid data
+    nextApi -> express : POST /newProduct\n{ product: data }
+end
+
+== Express Handler ==
+express -> express : Extract product from req.body
+express -> express : Validate required fields
+
+alt Missing required fields (server-side)
+    express --> nextApi : 400 { error: 'Name, description, and price are required' }
+    nextApi --> client : 400 Error
+else Valid data
+    express -> productModel : new ProductModel({...})
+    note right of productModel
+        {
+            name, description, price,
+            currency: 'USD' (default),
+            seller, buyer: null,
+            images: [], category,
+            condition: 'good' (default),
+            tags: [], location: {},
+            status: 'active' (default),
+            negotiable: true (default),
+            allowsMeetup: true (default),
+            allowsShipping: false (default),
+            views: 0
+        }
+    end note
+    
+    productModel -> mongodb : product.save()
+    mongodb --> productModel : savedProduct
+    
+    == Update Seller's Products Array ==
+    express -> userModel : UserModel.updateOne(\n  {_id: seller},\n  {$push: {products: savedProduct._id}}\n)
+    userModel -> mongodb : Update user document
+    mongodb --> userModel : Update confirmed
+    
+    express --> nextApi : JSON savedProduct
+    nextApi --> client : 201 Created { product }
+end
+
+@enduml
+

@@ -1,0 +1,63 @@
+@startuml
+title UC-API-013: Manage Messages
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/messages/route.js)" as messagesApi
+participant "_utils.js" as utils
+participant "In-Memory DB" as db
+
+== GET All Messages ==
+client -> messagesApi : GET /api/messages
+messagesApi -> db : Read db.messages
+db --> messagesApi : messages[]
+messagesApi --> client : 200 JSON messages[]
+
+== POST Create Message ==
+client -> messagesApi : POST /api/messages
+note right of client
+    Body: {
+        conversationId: "convo-abc123",
+        senderId: "user-xyz789",
+        body: "Hello, is this still available?"
+    }
+end note
+
+== Parse Request Body ==
+messagesApi -> utils : readJson(req)
+utils -> utils : Parse JSON from request
+utils --> messagesApi : { conversationId, senderId, body }
+
+== Generate Message ID ==
+messagesApi -> utils : generateId('msg')
+utils -> utils : Generate random + timestamp
+utils --> messagesApi : "msg-{random}-{timestamp}"
+
+== Create Message Object ==
+messagesApi -> messagesApi : Create message object
+note right of messagesApi
+    msg = {
+        id: generated ID,
+        conversationId: data.conversationId,
+        senderId: data.senderId,
+        body: data.body,
+        createdAt: Date.now()
+    }
+end note
+
+== Store Message ==
+messagesApi -> db : db.messages.push(msg)
+db --> messagesApi : Message stored
+
+== Response ==
+messagesApi --> client : 201 Created { message }
+
+note over client, db
+    <<inferred>> In production:
+    - Should validate conversationId exists
+    - Should validate senderId is participant
+    - Should update conversation.lastMessageAt
+    - Should trigger notification to other participants
+end note
+
+@enduml
+

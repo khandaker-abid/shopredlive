@@ -1,0 +1,46 @@
+@startuml
+title UC-API-007: User Login Verification
+
+actor "Client" as client
+participant "Express Server\n(server.js)" as express
+control "UserModel\n(users.js)" as userModel
+participant "bcrypt" as bcrypt
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> express : POST /users/verify-login
+note right of client
+    Body: {
+        email: "user@example.com",
+        password: "userpassword"
+    }
+end note
+
+== Extract Credentials ==
+express -> express : Extract { email, password } from req.body
+
+== Find User by Email ==
+express -> userModel : UserModel.findOne({ email: email })
+userModel -> mongodb : Query by email
+mongodb --> userModel : user or null
+
+alt User Not Found
+    userModel --> express : null
+    express --> client : 200 {\n  validEmail: false,\n  validPassword: false\n}
+else User Found
+    userModel --> express : user document
+    
+    == Verify Password ==
+    express -> bcrypt : bcrypt.compare(password, user.password)
+    bcrypt -> bcrypt : Compare plain text with hash
+    bcrypt --> express : match (boolean)
+    
+    alt Password Matches
+        express --> client : 200 {\n  validEmail: true,\n  validPassword: true,\n  userId: user._id\n}
+    else Password Does Not Match
+        express --> client : 200 {\n  validEmail: true,\n  validPassword: false\n}
+    end
+end
+
+@enduml
+

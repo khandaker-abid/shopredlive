@@ -1,0 +1,53 @@
+@startuml
+title UC-API-005: Delete Product
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/products/[id]/route.js)" as nextApi
+participant "Express Server\n(server.js)" as express
+control "ProductModel\n(products.js)" as productModel
+control "UserModel\n(users.js)" as userModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> nextApi : DELETE /api/products/{id}
+nextApi -> nextApi : Extract id from params
+nextApi -> express : DELETE /product/{id}
+
+== Express Handler ==
+express -> express : Extract productId from req.params
+
+express -> productModel : ProductModel.findByIdAndDelete(productId)
+productModel -> mongodb : Find and delete document
+
+alt Product Found
+    mongodb --> productModel : deletedProduct
+    productModel --> express : deleted product object
+    
+    == Cleanup: Remove from Seller's Products Array ==
+    express -> userModel : UserModel.updateOne(\n  { products: productId },\n  { $pull: { products: productId } }\n)
+    note right of userModel
+        Remove product reference
+        from seller's products array
+    end note
+    userModel -> mongodb : Update user document
+    mongodb --> userModel : Update confirmed
+    
+    express --> nextApi : JSON deletedProduct
+    nextApi --> client : 200 OK { deletedProduct }
+    
+else Product Not Found
+    mongodb --> productModel : null
+    productModel --> express : null
+    express --> nextApi : 404 { error: 'Product not found' }
+    nextApi --> client : 404 { error: 'Product not found' }
+    
+else Database Error
+    mongodb --> productModel : Error
+    productModel --> express : Error thrown
+    express -> express : console.error()
+    express --> nextApi : 500 { error: 'Failed to delete product' }
+    nextApi --> client : 500 { error: 'Failed to delete product' }
+end
+
+@enduml
+

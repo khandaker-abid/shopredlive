@@ -1,0 +1,57 @@
+@startuml
+title UC-FE-002: User Registration (Sign Up)
+
+actor "Guest User" as user
+participant "SignupPage\n(page.js)" as signupPage
+participant "ProtectedRoute\n(ProtectedRoute.js)" as protectedRoute
+participant "AuthContext\n(AuthContext.js)" as authContext
+participant "localStorage" as localStorage
+participant "Next.js Router" as router
+
+== Page Load ==
+user -> signupPage : Navigate to /signup
+signupPage -> protectedRoute : Wrap with requireAuth=false
+protectedRoute -> authContext : Check user state
+
+alt User already logged in
+    authContext --> protectedRoute : user exists
+    protectedRoute -> router : push('/')
+    router --> user : Redirect to home
+else User not logged in
+    authContext --> protectedRoute : user is null
+    protectedRoute --> signupPage : Render signup form
+    signupPage --> user : Display registration form
+end
+
+== Registration Flow ==
+user -> signupPage : Enter name, email, password, confirmPassword
+user -> signupPage : Click "Sign Up"
+signupPage -> signupPage : handleSubmit(e)
+signupPage -> signupPage : setError('')
+
+alt Empty fields
+    signupPage --> user : "Please fill in all fields"
+else Passwords don't match
+    signupPage --> user : "Passwords do not match"
+else Password too short
+    signupPage --> user : "Password must be at least 6 characters"
+else Valid input
+    signupPage -> signupPage : Create userData object
+    note right of signupPage
+        userData = {
+            id: Date.now(),
+            email: email,
+            name: name,
+            avatar: null
+        }
+    end note
+    signupPage -> authContext : login(userData)
+    authContext -> authContext : setUser(userData)
+    authContext -> localStorage : setItem('user', JSON.stringify(userData))
+    authContext --> signupPage : Registration complete
+    signupPage -> router : push('/')
+    router --> user : Redirect to home page
+end
+
+@enduml
+

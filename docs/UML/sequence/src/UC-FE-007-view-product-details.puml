@@ -1,0 +1,67 @@
+@startuml
+title UC-FE-007: View Product Details
+
+actor "Authenticated User" as user
+participant "ProductCard\n(ProductCard.js)" as productCard
+participant "ListingDetailPage\n(/listing/[id]/page.js)" as detailPage
+participant "ProductDetail\n(ProductDetail.js)" as productDetail
+participant "Next.js API Route\n(/api/products/[id])" as apiRoute
+participant "Express Server\n(server.js)" as expressServer
+database "MongoDB" as mongodb
+
+== Navigate to Product Detail ==
+user -> productCard : Click on product card
+productCard -> detailPage : Navigate to /listing/{id}
+detailPage -> detailPage : Extract id from params
+detailPage -> productDetail : Render ProductDetail(id)
+
+== Fetch Product Data ==
+productDetail -> productDetail : useEffect() with id dependency
+productDetail -> productDetail : setLoading(true)
+productDetail -> apiRoute : fetch(`/api/products/${id}`)
+apiRoute -> apiRoute : Extract id from params
+apiRoute -> expressServer : GET /product/{id}
+expressServer -> mongodb : ProductModel.findById(id)
+expressServer -> mongodb : populate('seller', 'buyer', 'category')
+
+alt Product found
+    mongodb --> expressServer : product document
+    expressServer --> apiRoute : JSON product
+    apiRoute --> productDetail : Response JSON
+    productDetail -> productDetail : setProduct(data)
+else Product not found
+    mongodb --> expressServer : null
+    expressServer --> apiRoute : 404 Not Found
+    apiRoute --> productDetail : Error response
+    productDetail -> productDetail : Use mock product fallback
+    note right of productDetail
+        Mock product with:
+        - Sample name, price, description
+        - Default condition, status
+        - Placeholder seller info
+    end note
+end
+
+productDetail -> productDetail : setLoading(false)
+
+== Render Product Details ==
+productDetail -> productDetail : Map condition to display label
+productDetail -> productDetail : Format createdAt date
+
+alt Product has images
+    productDetail --> user : Display product image
+else No images
+    productDetail --> user : Display gradient placeholder with product name
+end
+
+productDetail --> user : Display product name
+productDetail --> user : Display price and negotiable chip
+productDetail --> user : Display category, condition, status chips
+productDetail --> user : Display delivery options (Meetup/Shipping)
+productDetail --> user : Display "Make Offer" button
+productDetail --> user : Display description
+productDetail --> user : Display seller information
+productDetail --> user : Display listing date and view count
+
+@enduml
+

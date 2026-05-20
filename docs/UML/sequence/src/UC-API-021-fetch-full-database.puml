@@ -1,0 +1,82 @@
+@startuml
+title UC-API-021: Fetch Full Database
+
+actor "Admin/Developer" as client
+participant "Express Server\n(server.js)" as express
+control "ProductModel\n(products.js)" as productModel
+control "UserModel\n(users.js)" as userModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> express : GET /db
+
+note over client
+    Debug/Admin endpoint for
+    viewing complete database state
+end note
+
+== Fetch Products ==
+express -> productModel : ProductModel.find()
+productModel -> mongodb : Query all products
+
+express -> productModel : populate('seller')
+note right of productModel
+    Select: name, actualName,
+    profilePic, email
+end note
+
+express -> productModel : populate('buyer')
+note right of productModel
+    Select: name, actualName,
+    profilePic, email
+end note
+
+express -> productModel : populate('category')
+note right of productModel
+    Select: name
+end note
+
+express -> productModel : exec()
+productModel -> mongodb : Execute populated query
+mongodb --> productModel : products[]
+
+== Fetch Users ==
+express -> userModel : UserModel.find()
+userModel -> mongodb : Query all users
+
+express -> userModel : populate("products savedProducts")
+express -> userModel : exec()
+userModel -> mongodb : Execute populated query
+mongodb --> userModel : users[]
+
+== Build Response ==
+alt Database Success
+    productModel --> express : products array
+    userModel --> express : users array
+    
+    express -> express : Build response object
+    note right of express
+        resp = {
+            products: products,
+            users: users
+        }
+    end note
+    
+    express -> express : console.log(1)
+    express --> client : 200 JSON { products, users }
+    
+else Database Error
+    mongodb --> express : Error
+    express -> express : console.error(err)
+    express --> client : 500 { error: 'Failed to fetch database', details: err.message }
+end
+
+note over client, mongodb
+    Security Note:
+    This endpoint should be protected
+    and only accessible in development
+    or by authenticated admins.
+end note
+
+@enduml
+

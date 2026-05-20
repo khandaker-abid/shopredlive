@@ -1,0 +1,47 @@
+@startuml
+title UC-API-009: Fetch Single User by ID
+
+actor "Client" as client
+participant "Express Server\n(server.js)" as express
+control "UserModel\n(users.js)" as userModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> express : GET /user/{id}
+
+== Express Handler ==
+express -> express : Extract id from req.params['id']
+
+express -> userModel : UserModel.findById(id)
+userModel -> mongodb : Query by ObjectId
+
+express -> userModel : populate("products savedProducts")
+note right of userModel
+    Populate references:
+    - products: user's listed items
+    - savedProducts: wishlisted items
+end note
+
+express -> userModel : exec()
+userModel -> mongodb : Execute query
+
+alt User Found
+    mongodb --> userModel : user document with populated refs
+    userModel --> express : user object
+    express --> client : 200 JSON user
+else User Not Found
+    mongodb --> userModel : null
+    userModel --> express : null
+    express --> client : 200 JSON null
+    note right of express
+        Returns null if not found
+        (no 404 status)
+    end note
+else Database Error
+    mongodb --> userModel : Error
+    userModel --> express : Error thrown
+    express --> client : 500 Internal Server Error
+end
+
+@enduml
+

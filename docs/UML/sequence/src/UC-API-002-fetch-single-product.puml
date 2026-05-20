@@ -1,0 +1,60 @@
+@startuml
+title UC-API-002: Fetch Single Product by ID
+
+actor "Client" as client
+participant "Next.js API Route\n(/api/products/[id]/route.js)" as nextApi
+participant "Express Server\n(server.js)" as express
+control "ProductModel\n(products.js)" as productModel
+database "MongoDB" as mongodb
+
+== Request Flow ==
+client -> nextApi : GET /api/products/{id}
+nextApi -> nextApi : Extract id from params
+nextApi -> express : GET /product/{id}
+
+== Express Handler ==
+express -> express : Extract id from req.params
+express -> productModel : ProductModel.findById(id)
+productModel -> mongodb : Query by ObjectId
+
+== Populate References ==
+express -> productModel : populate('seller')
+note right of productModel
+    Select: name, actualName,
+    profilePic, email
+end note
+
+express -> productModel : populate('buyer')
+note right of productModel
+    Select: name, actualName,
+    profilePic, email
+end note
+
+express -> productModel : populate('category')
+note right of productModel
+    Select: name
+end note
+
+express -> productModel : exec()
+productModel -> mongodb : Execute query
+
+alt Product Found
+    mongodb --> productModel : product document
+    productModel --> express : product object
+    express --> nextApi : JSON product
+    nextApi --> client : 200 OK { product }
+else Product Not Found
+    mongodb --> productModel : null
+    productModel --> express : null
+    express --> nextApi : 404 { error: 'Product not found' }
+    nextApi --> client : 404 { error: 'Product not found' }
+else Database Error
+    mongodb --> productModel : Error
+    productModel --> express : Error thrown
+    express -> express : console.error()
+    express --> nextApi : 500 { error, details }
+    nextApi --> client : 500 { error: 'Failed to fetch product' }
+end
+
+@enduml
+
