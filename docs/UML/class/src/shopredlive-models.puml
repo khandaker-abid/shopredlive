@@ -1,0 +1,156 @@
+@startuml
+title ShopRedLive — MongoDB Data Models
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam groupInheritance 2
+
+class User {
+    _id: ObjectId
+    name: String
+    email: String [unique]
+    password: String [hashed]
+    avatar: String
+    bio: String
+    stripeAccountId: String
+    stripeOnboardingComplete: Boolean
+    failedLoginAttempts: Number
+    lockUntil: Date
+    knownDevices: Array
+    mfaSecret: String
+    savedSearches: Array
+    createdAt: Date
+    updatedAt: Date
+}
+
+class Product {
+    _id: ObjectId
+    name: String
+    description: String
+    price: Number
+    condition: Enum [new, like_new, good, fair, poor]
+    status: Enum [active, reserved, sold, expired]
+    images: [String]
+    negotiable: Boolean
+    allowShipping: Boolean
+    allowMeetup: Boolean
+    location: String
+    views: Number
+    expiresAt: Date
+    createdAt: Date
+    updatedAt: Date
+    seller: ObjectId --> User
+    buyer: ObjectId --> User
+    category: ObjectId --> Category
+}
+
+class Order {
+    _id: ObjectId
+    status: Enum [pending_payment, pending_meetup, payment_received, completed, cancelled, disputed]
+    price: Number
+    currency: String
+    paymentMethod: Enum [stripe, meetup]
+    stripePaymentIntentId: String
+    stripeTransferId: String
+    fraudFlag: Boolean
+    riskScore: Number
+    payoutHold: Boolean
+    disputeActive: Boolean
+    meetup: MeetupDetails
+    shippingAddress: AddressDetails
+    returnRequested: Boolean
+    createdAt: Date
+    updatedAt: Date
+    product: ObjectId --> Product
+    buyer: ObjectId --> User
+    seller: ObjectId --> User
+}
+
+class Conversation {
+    _id: ObjectId
+    lastMessage: String
+    lastMessageAt: Date
+    createdAt: Date
+    participants: [ObjectId] --> User
+    product: ObjectId --> Product
+}
+
+class Message {
+    _id: ObjectId
+    body: String
+    attachments: [String]
+    readAt: Date
+    createdAt: Date
+    sender: ObjectId --> User
+    conversation: ObjectId --> Conversation
+}
+
+class Offer {
+    _id: ObjectId
+    amount: Number
+    status: Enum [pending, accepted, rejected, countered, expired]
+    message: String
+    counterAmount: Number
+    expiresAt: Date
+    createdAt: Date
+    updatedAt: Date
+    product: ObjectId --> Product
+    buyer: ObjectId --> User
+    seller: ObjectId --> User
+}
+
+class Review {
+    _id: ObjectId
+    rating: Number [1..5]
+    comment: String
+    createdAt: Date
+    product: ObjectId --> Product
+    reviewer: ObjectId --> User
+    reviewee: ObjectId --> User
+}
+
+class Notification {
+    _id: ObjectId
+    type: Enum [message, offer, order, review, system]
+    title: String
+    body: String
+    link: String
+    readAt: Date
+    createdAt: Date
+    user: ObjectId --> User
+}
+
+class Category {
+    _id: ObjectId
+    name: String [unique]
+    icon: String
+    description: String
+}
+
+class Report {
+    _id: ObjectId
+    type: Enum [user, product]
+    reason: String
+    details: String
+    status: Enum [open, reviewed, resolved, dismissed]
+    moderatorNote: String
+    createdAt: Date
+    reporter: ObjectId --> User
+    reportedUser: ObjectId --> User
+    reportedProduct: ObjectId --> Product
+}
+
+' Relationships
+User "1" -- "0..*" Product : sells
+User "1" -- "0..*" Product : buys
+Product "1" -- "0..*" Order
+Product "0..1" -- "0..1" Conversation
+Conversation "1" -- "0..*" Message
+Product "1" -- "0..*" Offer
+User "1" -- "0..*" Review : writes
+User "1" -- "0..*" Review : receives
+User "1" -- "0..*" Notification
+Product "*" -- "1" Category
+User "1" -- "0..*" Report : files
+
+@enduml

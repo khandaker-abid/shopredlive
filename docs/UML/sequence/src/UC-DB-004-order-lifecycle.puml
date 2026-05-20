@@ -1,11 +1,14 @@
 @startuml
-title UC-DB-004: Order Lifecycle
+title UC-DB-004: Order Lifecycle (with Stripe Payments & Fraud Detection)
 
 actor "Buyer" as buyer
 actor "Seller" as seller
 participant "Frontend" as frontend
 participant "Orders API\n(/api/orders)" as ordersApi
+participant "Payments API\n(/api/payments)" as paymentsApi
 participant "Products API\n(/api/products)" as productsApi
+participant "SecurityService\n(services/security.js)" as security
+participant "StripeService\n(services/stripe.js)" as stripe
 participant "Notifications API" as notifApi
 database "MongoDB\n(Order Schema)" as mongodb
 
@@ -16,42 +19,46 @@ note right of frontend
     {
         productId, buyerId, sellerId,
         price: acceptedOfferAmount,
-        meetup: {
-            time: null,
-            campus: "",
-            locationDetail: ""
-        }
+        paymentMethod: 'stripe' | 'meetup'
     }
 end note
 
-ordersApi -> mongodb : Create Order document
-note right of ordersApi
-    Order Schema Fields:
-    - product: ObjectId (ref: Product)
-    - buyer: ObjectId (ref: User)
-    - seller: ObjectId (ref: User)
-    - status: 'pending_meetup'
-    - price: Number
-    - currency: 'USD'
-    - meetup: { time, campus, locationDetail, notes }
-    - timestamps: true
-end note
+== Fraud Detection ==
+ordersApi -> security : checkTransactionVelocity(buyerId)
+ordersApi -> security : checkTriangulationRisk(buyerId, sellerId, productId)
+alt High fraud risk
+    security --> ordersApi : { riskScore: HIGH }
+    ordersApi -> mongodb : Create order with fraudFlag: true, payoutHold: true
+    ordersApi --> frontend : 201 { order, requiresReview: true }
+else Low risk
+    ordersApi -> mongodb : Create Order document
+    note right of ordersApi
+        Status: 'pending_payment' (Stripe) or 'pending_meetup' (cash)
+        fraudFlag: false, payoutHold: false
+    end note
+    mongodb --> ordersApi : Order created
+    ordersApi --> frontend : 201 { order }
+end
 
-mongodb --> ordersApi : Order created
-ordersApi --> frontend : 201 { order }
+frontend -> productsApi : PATCH /api/products/{id} { status: 'reserved' }
 
-frontend -> productsApi : PATCH /api/products/{id}
-note right of frontend
-    { status: 'reserved' }
-end note
-productsApi -> mongodb : Update product status
+== Payment (Stripe Path) ==
+alt Payment method is Stripe
+    buyer -> frontend : Proceed to checkout
+    frontend -> paymentsApi : POST /api/payments/create-intent
+    note right of frontend
+        { orderId, amount, sellerId }
+    end note
+    paymentsApi -> stripe : createPaymentIntent(amount, sellerId)
+    stripe --> paymentsApi : { clientSecret, paymentIntentId }
+    paymentsApi --> frontend : { clientSecret }
+    buyer -> frontend : Submit card details
+    frontend -> stripe : confirmPayment(clientSecret)
+    stripe --> frontend : Payment confirmed
+    frontend -> ordersApi : PATCH /api/orders/{id} { status: 'payment_received' }
+end
 
-frontend -> notifApi : POST /api/notifications
-note right of frontend
-    Notify buyer: "Offer accepted!"
-end note
-
-== Arrange Meetup ==
+== Arrange Meetup (Cash/Meetup Path) ==
 buyer -> frontend : Propose meetup details
 frontend -> ordersApi : PATCH /api/orders/{id}
 note right of frontend
@@ -59,63 +66,46 @@ note right of frontend
         meetup: {
             time: "2025-12-20T14:00:00",
             campus: "Main Campus",
-            locationDetail: "Library entrance",
-            notes: "I'll wear a blue jacket"
+            locationDetail: "Library entrance"
         }
     }
 end note
-
 ordersApi -> mongodb : Update meetup details
-mongodb --> ordersApi : Updated
-ordersApi --> frontend : 200 { order }
-
-frontend -> notifApi : POST /api/notifications
-note right of frontend
-    Notify seller: "Meetup proposed"
-end note
+frontend -> notifApi : Notify seller: "Meetup proposed"
 
 seller -> frontend : Confirm meetup
-frontend -> notifApi : POST /api/notifications
-note right of frontend
-    Notify buyer: "Meetup confirmed"
-end note
+frontend -> notifApi : Notify buyer: "Meetup confirmed"
 
 == Complete Transaction ==
 buyer -> frontend : Confirm item received
 seller -> frontend : Confirm payment received
-
-frontend -> ordersApi : PATCH /api/orders/{id}
-note right of frontend
-    { status: 'completed' }
-end note
-
+frontend -> ordersApi : PATCH /api/orders/{id} { status: 'completed' }
 ordersApi -> mongodb : Update status to 'completed'
-mongodb --> ordersApi : Updated
 
-frontend -> productsApi : PATCH /api/products/{id}
-note right of frontend
-    { status: 'sold', buyer: buyerId }
-end note
+alt Stripe payment and no payout hold
+    ordersApi -> stripe : Release payout to seller
+else Payout hold active
+    ordersApi --> seller : Payout held pending review
+end
 
+frontend -> productsApi : PATCH /api/products/{id} { status: 'sold', buyer: buyerId }
 frontend --> buyer : Enable review submission
 frontend --> seller : Enable review submission
 
+== Stripe Webhook: Dispute Handling ==
+stripe -> ordersApi : POST /api/stripe/webhook { type: 'charge.dispute.created' }
+ordersApi -> mongodb : Set order.disputeActive = true
+ordersApi -> security : Escalate for manual review
+
 == Alternate: Cancel Order ==
 alt Buyer or Seller cancels
-    frontend -> ordersApi : PATCH /api/orders/{id}
-    note right of frontend
-        { status: 'cancelled' }
-    end note
-    
+    frontend -> ordersApi : PATCH /api/orders/{id} { status: 'cancelled' }
     ordersApi -> mongodb : Update status
-    
-    frontend -> productsApi : PATCH /api/products/{id}
-    note right of frontend
-        { status: 'active' }
-    end note
-    
+    alt Stripe payment was made
+        ordersApi -> stripe : Issue refund
+    end
+    frontend -> productsApi : PATCH /api/products/{id} { status: 'active' }
     frontend -> notifApi : Notify other party
 end
 
 @enduml
-

@@ -1,8 +1,9 @@
 @startuml
-title UC-API-007: User Login Verification
+title UC-API-007: User Login Verification (with Security Layer)
 
 actor "Client" as client
 participant "Express Server\n(server.js)" as express
+participant "SecurityService\n(services/security.js)" as security
 control "UserModel\n(users.js)" as userModel
 participant "bcrypt" as bcrypt
 database "MongoDB" as mongodb
@@ -11,36 +12,68 @@ database "MongoDB" as mongodb
 client -> express : POST /users/verify-login
 note right of client
     Body: {
-        email: "user@example.com",
-        password: "userpassword"
+        email: "user@stonybrook.edu",
+        password: "userpassword",
+        deviceFingerprint: "...",
+        captchaToken: "..."
     }
 end note
 
-== Extract Credentials ==
-express -> express : Extract { email, password } from req.body
+== Rate Limiting Check ==
+express -> security : checkRateLimit(ip)
+alt Rate limit exceeded
+    security --> express : { blocked: true }
+    express --> client : 429 Too Many Requests
+end
+
+== CAPTCHA Verification ==
+express -> security : verifyCaptcha(captchaToken)
+alt CAPTCHA invalid
+    security --> express : { valid: false }
+    express --> client : 400 CAPTCHA verification failed
+end
 
 == Find User by Email ==
-express -> userModel : UserModel.findOne({ email: email })
+express -> userModel : UserModel.findOne({ email })
 userModel -> mongodb : Query by email
 mongodb --> userModel : user or null
 
 alt User Not Found
     userModel --> express : null
-    express --> client : 200 {\n  validEmail: false,\n  validPassword: false\n}
+    express --> client : 200 { validEmail: false, validPassword: false }
 else User Found
     userModel --> express : user document
-    
+
+    == Account Lockout Check ==
+    express -> express : Check user.lockUntil
+    alt Account is locked
+        express --> client : 403 { locked: true, lockUntil: timestamp }
+    end
+
     == Verify Password ==
     express -> bcrypt : bcrypt.compare(password, user.password)
-    bcrypt -> bcrypt : Compare plain text with hash
     bcrypt --> express : match (boolean)
-    
-    alt Password Matches
-        express --> client : 200 {\n  validEmail: true,\n  validPassword: true,\n  userId: user._id\n}
-    else Password Does Not Match
-        express --> client : 200 {\n  validEmail: true,\n  validPassword: false\n}
+
+    alt Password Does Not Match
+        express -> userModel : increment failedLoginAttempts
+        alt Attempts >= threshold
+            express -> userModel : set lockUntil (30 min)
+        end
+        express --> client : 200 { validEmail: true, validPassword: false }
+    else Password Matches
+
+        == Device Fingerprinting ==
+        express -> security : checkDeviceFingerprint(user, deviceFingerprint)
+        alt Unknown device
+            security --> express : { newDevice: true }
+            express -> express : Trigger MFA challenge
+            express --> client : 200 { mfaRequired: true, challengeToken: "..." }
+        else Known device
+            express -> userModel : reset failedLoginAttempts, update lastLogin
+            mongodb --> userModel : Updated
+            express --> client : 200 { validEmail: true, validPassword: true, userId: user._id }
+        end
     end
 end
 
 @enduml
-

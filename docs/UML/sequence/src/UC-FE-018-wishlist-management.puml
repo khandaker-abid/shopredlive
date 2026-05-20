@@ -1,0 +1,50 @@
+@startuml
+title UC-FE-018: Wishlist Management
+
+actor "Authenticated User" as user
+participant "WishlistButton\n(WishlistButton.js)" as button
+participant "AuthContext\n(AuthContext.js)" as auth
+participant "localStorage" as storage
+
+== Mount: Load Saved State ==
+user -> button : Component mounts with productId
+button -> auth : useAuth() → user._id
+button -> storage : getItem('wishlist_<userId>')
+alt Item exists in localStorage
+    storage --> button : JSON array of productIds
+    button -> button : setSaved(array.includes(productId))
+    button --> user : Render filled heart icon
+else Not yet saved
+    storage --> button : null
+    button -> button : setSaved(false)
+    button --> user : Render outline heart icon
+end
+
+== Add to Wishlist ==
+user -> button : Click heart (unsaved state)
+button -> button : e.preventDefault(), e.stopPropagation()
+button -> storage : getItem('wishlist_<userId>')
+storage --> button : current array (may be empty)
+button -> button : next = [...current, productId]
+button -> storage : setItem('wishlist_<userId>', JSON.stringify(next))
+button -> button : setSaved(true)
+button --> user : Render filled red heart (optimistic update)
+
+== Remove from Wishlist ==
+user -> button : Click heart (saved state)
+button -> button : e.preventDefault(), e.stopPropagation()
+button -> storage : getItem('wishlist_<userId>')
+storage --> button : current array
+button -> button : next = current.filter(id => id !== productId)
+button -> storage : setItem('wishlist_<userId>', JSON.stringify(next))
+button -> button : setSaved(false)
+button --> user : Render outline heart icon
+
+== Unauthenticated User ==
+note over button
+    WishlistButton renders null
+    when user is not logged in.
+    No tooltip or icon shown.
+end note
+
+@enduml
