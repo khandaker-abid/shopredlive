@@ -17,9 +17,13 @@ import {
   Divider,
   Slider,
   Button,
-  CircularProgress
+  CircularProgress,
+  TextField,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import { fetchCategories as fetchCategoriesAPI } from '../lib/api';
+import CampusMap from './CampusMap';
 
 export default function Sidebar() {
   const theme = useTheme();
@@ -30,8 +34,11 @@ export default function Sidebar() {
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [condition, setCondition] = useState('');
   const [sort, setSort] = useState('newest');
+  const [campus, setCampus] = useState('');
+  const [allowsMeetup, setAllowsMeetup] = useState(false);
+  const [allowsShipping, setAllowsShipping] = useState(false);
 
-  const active = searchParams.get('category') || 'All';
+  const active = searchParams.get('category') || 'all';
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -47,12 +54,23 @@ export default function Sidebar() {
     loadCategories();
   }, []);
 
-  const buildHref = useCallback((categoryName) => {
+  useEffect(() => {
+    const minPrice = Number(searchParams.get('minPrice') || 0);
+    const maxPrice = Number(searchParams.get('maxPrice') || 1000);
+    setPriceRange([minPrice, maxPrice]);
+    setCondition(searchParams.get('condition') || '');
+    setSort(searchParams.get('sort') || 'newest');
+    setCampus(searchParams.get('campus') || '');
+    setAllowsMeetup(searchParams.get('allowsMeetup') === 'true');
+    setAllowsShipping(searchParams.get('allowsShipping') === 'true');
+  }, [searchParams]);
+
+  const buildHref = useCallback((categoryId) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (categoryName === 'All') {
+    if (categoryId === 'all') {
       params.delete('category');
     } else {
-      params.set('category', categoryName);
+      params.set('category', categoryId);
     }
     if (priceRange[0] > 0) params.set('minPrice', priceRange[0]);
     else params.delete('minPrice');
@@ -62,8 +80,14 @@ export default function Sidebar() {
     else params.delete('condition');
     if (sort !== 'newest') params.set('sort', sort);
     else params.delete('sort');
+    if (campus) params.set('campus', campus);
+    else params.delete('campus');
+    if (allowsMeetup) params.set('allowsMeetup', 'true');
+    else params.delete('allowsMeetup');
+    if (allowsShipping) params.set('allowsShipping', 'true');
+    else params.delete('allowsShipping');
     return `/?${params.toString()}`;
-  }, [searchParams, priceRange, condition, sort]);
+  }, [searchParams, priceRange, condition, sort, campus, allowsMeetup, allowsShipping]);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -75,8 +99,14 @@ export default function Sidebar() {
     else params.delete('condition');
     if (sort !== 'newest') params.set('sort', sort);
     else params.delete('sort');
+    if (campus) params.set('campus', campus);
+    else params.delete('campus');
+    if (allowsMeetup) params.set('allowsMeetup', 'true');
+    else params.delete('allowsMeetup');
+    if (allowsShipping) params.set('allowsShipping', 'true');
+    else params.delete('allowsShipping');
     router.push(`/?${params.toString()}`);
-  }, [searchParams, priceRange, condition, sort, router]);
+  }, [searchParams, priceRange, condition, sort, campus, allowsMeetup, allowsShipping, router]);
 
   const allCategories = useMemo(() => [{ _id: 'all', name: 'All' }, ...categories], [categories]);
 
@@ -104,12 +134,12 @@ export default function Sidebar() {
       ) : (
         <List sx={{ padding: 0, margin: 0 }}>
           {allCategories.map((c) => {
-            const isActive = active === c.name || (c.name === 'All' && !searchParams.get('category'));
+            const isActive = active === c._id || (c._id === 'all' && !searchParams.get('category'));
             return (
               <ListItem key={c._id} disablePadding>
                 <ListItemButton
                   component={Link}
-                  href={buildHref(c.name)}
+                  href={buildHref(c._id)}
                   sx={{
                     padding: '8px',
                     borderRadius: 1,
@@ -178,8 +208,37 @@ export default function Sidebar() {
           <MenuItem value="oldest">Oldest First</MenuItem>
           <MenuItem value="price_asc">Price: Low to High</MenuItem>
           <MenuItem value="price_desc">Price: High to Low</MenuItem>
+          <MenuItem value="most_viewed">Most Viewed</MenuItem>
+          <MenuItem value="ending_soon">Ending Soon</MenuItem>
         </Select>
       </FormControl>
+
+      <TextField
+        label="Campus"
+        value={campus}
+        onChange={(e) => setCampus(e.target.value)}
+        size="small"
+        fullWidth
+        sx={{ mb: 2 }}
+        placeholder="Main Campus"
+      />
+
+      <FormControlLabel
+        control={<Switch checked={allowsMeetup} onChange={(e) => setAllowsMeetup(e.target.checked)} />}
+        label="Meetup Available"
+        sx={{ mb: 1 }}
+      />
+
+      <FormControlLabel
+        control={<Switch checked={allowsShipping} onChange={(e) => setAllowsShipping(e.target.checked)} />}
+        label="Shipping Available"
+        sx={{ mb: 2 }}
+      />
+
+      <CampusMap
+        selected={campus}
+        onSelect={(value) => setCampus(value)}
+      />
 
       <Button
         variant="contained"

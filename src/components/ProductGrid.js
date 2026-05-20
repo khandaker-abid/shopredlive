@@ -43,6 +43,9 @@ export default function ProductGrid() {
       const minPrice = searchParams.get('minPrice');
       const maxPrice = searchParams.get('maxPrice');
       const sort = searchParams.get('sort');
+      const campus = searchParams.get('campus');
+      const allowsMeetup = searchParams.get('allowsMeetup');
+      const allowsShipping = searchParams.get('allowsShipping');
 
       const params = new URLSearchParams();
       if (q) params.append('q', q);
@@ -51,6 +54,9 @@ export default function ProductGrid() {
       if (minPrice) params.append('minPrice', minPrice);
       if (maxPrice) params.append('maxPrice', maxPrice);
       if (sort) params.append('sort', sort);
+      if (campus) params.append('campus', campus);
+      if (allowsMeetup) params.append('allowsMeetup', allowsMeetup);
+      if (allowsShipping) params.append('allowsShipping', allowsShipping);
       params.append('page', pageNum.toString());
       params.append('limit', '20');
 

@@ -19,11 +19,13 @@ var ProductSchema = new Schema(
             campus: {type: String, trim: true},
             area: {type: String, trim: true}
         },
-        status: {type: String, enum: ['active', 'reserved', 'sold', 'removed'], default: 'active'},
+        status: {type: String, enum: ['active', 'reserved', 'sold', 'removed', 'draft', 'expired'], default: 'active'},
         negotiable: {type: Boolean, default: true},
         allowsMeetup: {type: Boolean, default: true},
         allowsShipping: {type: Boolean, default: false},
         views:{type:Number, default:0},
+        expiresAt: {type: Date},
+        bumpedAt: {type: Date}
     }, {timestamps: true}
 );
 

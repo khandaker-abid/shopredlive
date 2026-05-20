@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import ProductGrid from '../components/ProductGrid';
+import RecentlyViewed from '../components/RecentlyViewed';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -59,6 +60,7 @@ export default function HomePage() {
           flex: 1,
           backgroundColor: 'background.default'
         }}>
+          <RecentlyViewed />
           <ProductGrid />
         </Box>
       </Box>

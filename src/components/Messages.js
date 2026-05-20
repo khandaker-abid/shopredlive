@@ -13,10 +13,15 @@ import {
   Avatar,
   IconButton,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import SendIcon from '@mui/icons-material/Send';
+import FlagIcon from '@mui/icons-material/Flag';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -28,6 +33,9 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
   const messagesEndRef = useRef(null);
   const pollIntervalRef = useRef(null);
 
@@ -103,6 +111,28 @@ export default function Messages() {
       console.error('Error sending message:', error);
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleReport = async () => {
+    try {
+      const other = getOtherParticipant(selectedConvo);
+      if (!other?._id) return;
+      await fetch(`${BACKEND_URL}/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reporterId: user._id,
+          targetUserId: other._id,
+          reason: reportReason,
+          details: reportDetails
+        })
+      });
+      setReportOpen(false);
+      setReportReason('');
+      setReportDetails('');
+    } catch (error) {
+      console.error('Error reporting user:', error);
     }
   };
 
@@ -288,6 +318,9 @@ export default function Messages() {
                 </Typography>
               )}
             </Box>
+            <IconButton onClick={() => setReportOpen(true)} aria-label="Report user">
+              <FlagIcon />
+            </IconButton>
           </Box>
 
           <Box
@@ -400,6 +433,38 @@ export default function Messages() {
           </Typography>
         </Paper>
       )}
+
+      <Dialog open={reportOpen} onClose={() => setReportOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Report user</DialogTitle>
+        <DialogContent sx={{ display: 'grid', gap: 2, mt: 1 }}>
+          <TextField
+            select
+            label="Reason"
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            SelectProps={{ native: true }}
+          >
+            <option value="">Select a reason</option>
+            <option value="spam">Spam</option>
+            <option value="harassment">Harassment</option>
+            <option value="scam">Suspected scam</option>
+            <option value="other">Other</option>
+          </TextField>
+          <TextField
+            label="Details"
+            value={reportDetails}
+            onChange={(e) => setReportDetails(e.target.value)}
+            multiline
+            rows={3}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleReport} disabled={!reportReason}>
+            Submit report
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Box, Card, CardContent, Typography, TextField, Button, Link, Divider, Container, Alert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import ProofOfWorkCaptcha from '../../components/ProofOfWorkCaptcha';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -13,6 +14,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captcha, setCaptcha] = useState(null);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaChallengeId, setMfaChallengeId] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
   const router = useRouter();
   const { login } = useAuth();
 
@@ -25,28 +30,39 @@ export default function LoginPage() {
       return;
     }
 
+    if (!captcha) {
+      setError('Please wait for the security challenge to finish.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/users/verify-login`, {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password,
+          captcha,
+          mfaChallengeId: mfaRequired ? mfaChallengeId : undefined,
+          mfaCode: mfaRequired ? mfaCode : undefined
+        })
       });
       const data = await res.json();
 
-      if (!data.validEmail) {
-        setError('Email not found');
-        return;
-      }
-      if (!data.validPassword) {
-        setError('Invalid password');
+      if (data.mfaRequired) {
+        setMfaRequired(true);
+        setMfaChallengeId(data.mfaChallengeId || mfaChallengeId);
+        setError(data.error || data.message || 'Enter the code sent to your email.');
         return;
       }
 
-      const userRes = await fetch(`${BACKEND_URL}/user/${data.userId}`);
-      const userData = await userRes.json();
+      if (!res.ok) {
+        setError(data.error || 'Login failed');
+        return;
+      }
 
-      login(userData);
+      login(data.user);
       router.push('/');
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -117,6 +133,20 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
 
+                {mfaRequired ? (
+                  <TextField
+                    fullWidth
+                    label="Email verification code"
+                    variant="outlined"
+                    margin="normal"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    helperText="Check your email for the code."
+                  />
+                ) : null}
+
+                <ProofOfWorkCaptcha purpose="login" onSolved={setCaptcha} />
+
                 <Button
                   type="submit"
                   fullWidth
@@ -145,6 +175,12 @@ export default function LoginPage() {
                     OR
                   </Typography>
                 </Divider>
+              </Box>
+
+              <Box sx={{ textAlign: 'center', mb: 2 }}>
+                <Link href="/forgot-password" underline="hover" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  Forgot password?
+                </Link>
               </Box>
 
               <Box sx={{ textAlign: 'center', marginTop: 2 }}>

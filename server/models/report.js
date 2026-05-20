@@ -10,7 +10,12 @@ var ReportSchema = new Schema(
         targetProduct: { type: Schema.Types.ObjectId, ref: 'Product' },
         reason: { type: String, required: true, trim: true },
         details: { type: String, trim: true, maxLength: 5000 },
-        status: { type: String, enum: ['open', 'reviewing', 'resolved', 'dismissed'], default: 'open' }
+        status: { type: String, enum: ['open', 'reviewing', 'resolved', 'dismissed'], default: 'open' },
+        moderatorNotes: [{
+            note: { type: String, trim: true, maxLength: 2000 },
+            createdAt: { type: Date, default: Date.now },
+            createdBy: { type: String, trim: true }
+        }]
     }, { timestamps: true }
 );
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Box, Card, CardContent, TextField, Button, Typography, Divider,
   FormControl, InputLabel, Select, MenuItem, Chip, CircularProgress,
-  IconButton, ImageList, ImageListItem
+  IconButton, ImageList, ImageListItem, FormControlLabel, Switch
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -21,6 +21,7 @@ export default function SellForm() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState([]);
+  const [saveAsDraft, setSaveAsDraft] = useState(false);
   const [form, setForm] = useState({
     name: '',
     price: '',
@@ -105,6 +106,7 @@ export default function SellForm() {
           allowsShipping: form.allowsShipping,
           images: images,
           seller: user._id,
+          status: saveAsDraft ? 'draft' : 'active',
           location: {
             campus: form.campus,
             area: form.area
@@ -352,6 +354,19 @@ export default function SellForm() {
                   clickable
                 />
               </Box>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={saveAsDraft}
+                    onChange={(e) => setSaveAsDraft(e.target.checked)}
+                  />
+                }
+                label="Save as draft (not visible in search)"
+              />
+              <Typography variant="caption" color="text.secondary">
+                Listings expire after 30 days. You can renew or bump them later.
+              </Typography>
 
               <Button
                 type="submit"

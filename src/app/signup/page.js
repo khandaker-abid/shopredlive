@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Box, Card, CardContent, Typography, TextField, Button, Link, Divider, Container, Alert, Chip } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import ProofOfWorkCaptcha from '../../components/ProofOfWorkCaptcha';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -17,6 +18,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captcha, setCaptcha] = useState(null);
   const router = useRouter();
   const { login } = useAuth();
 
@@ -42,9 +44,14 @@ export default function SignupPage() {
       return;
     }
 
+    if (!captcha) {
+      setError('Please wait for the security challenge to finish.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/register`, {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -52,7 +59,8 @@ export default function SignupPage() {
           last: lastName,
           username: username,
           email: email,
-          password: password
+          password: password,
+          captcha
         })
       });
 
@@ -63,10 +71,7 @@ export default function SignupPage() {
         return;
       }
 
-      const userRes = await fetch(`${BACKEND_URL}/user/${data.userId}`);
-      const userData = await userRes.json();
-
-      login(userData);
+      login(data.user);
       router.push('/');
     } catch (err) {
       setError('Registration failed. Please try again.');
@@ -181,6 +186,8 @@ export default function SignupPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
+
+                <ProofOfWorkCaptcha purpose="register" onSolved={setCaptcha} />
 
                 <Button
                   type="submit"

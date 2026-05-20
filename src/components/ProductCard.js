@@ -28,6 +28,9 @@ function ProductCard({ product }) {
   };
   const conditionLabel = conditionLabels[product.condition] || product.condition || 'Unknown';
 
+  const expiresAt = product.expiresAt ? new Date(product.expiresAt) : null;
+  const endsSoon = expiresAt ? (expiresAt.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000) : false;
+
   const getImageUrl = (img) => {
     if (!img) return null;
     if (img.startsWith('http')) return img;
@@ -124,6 +127,9 @@ function ProductCard({ product }) {
           >
             ${product.price}
           </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+            {product.views || 0} views
+          </Typography>
           {product.negotiable && (
             <Chip
               label="Negotiable"
@@ -131,6 +137,15 @@ function ProductCard({ product }) {
               color="primary"
               variant="outlined"
               sx={{ height: '20px', fontSize: '0.7rem' }}
+            />
+          )}
+          {endsSoon && (
+            <Chip
+              label="Ending soon"
+              size="small"
+              color="warning"
+              variant="outlined"
+              sx={{ height: '20px', fontSize: '0.7rem', ml: 0.5 }}
             />
           )}
         </CardContent>
